@@ -10,7 +10,7 @@ import photo4 from "../img/photo4.png";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import axios from "axios";
 
-export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
+export const Intro = ({ id, fetchedUser, player, changeToken, changePlayer }) => {
     const routeNavigator = useRouteNavigator();
     const [step, setStep] = React.useState(1);
 
@@ -26,7 +26,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
                 const data = await axios.post('https://ochem.ru/api/get-token', fields);
         
                 if (data.data.token) {
-                    changeToken(data.data.token)
+                    changeToken(data.data.token, data.data.tokenDate.toString())
                     bridge.send('VKWebAppStorageSet', {
                         key: 'token',
                         value: data.data.token
@@ -55,7 +55,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
                          // Ошибка
                          console.log(error);
                        });
-                    getPlayer()
+                    changePlayer(data.data.user)
                     routeNavigator.go('/home')
                 } 
             } catch (err) {
@@ -78,10 +78,9 @@ export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
                         avaUrl: fetchedUser.photo_200,
                     }
                     const data = await axios.post('https://ochem.ru/api/auth/register', fields);
-                    console.log(data)
             
                     if (data.data.token) {
-                        changeToken(data.data.token)
+                        changeToken(data.data.token, data.data.tokenDate.toString())
                         bridge.send('VKWebAppStorageSet', {
                             key: 'token',
                             value: data.data.token
@@ -110,7 +109,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
                              // Ошибка
                              console.log(error);
                            });
-                        getPlayer()
+                        changePlayer(data.data.user)
                         routeNavigator.go('/home')
                     } 
                 } catch (err) {
@@ -186,8 +185,8 @@ export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
 
 Intro.propTypes = {
     id: PropTypes.string.isRequired,
-    getPlayer: PropTypes.func.isRequired,
     changeToken: PropTypes.func,
+    changePlayer: PropTypes.func,
     player: PropTypes.object,
     fetchedUser: PropTypes.shape({
         id: PropTypes.number,

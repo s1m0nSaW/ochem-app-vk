@@ -37,8 +37,9 @@ export const App = () => {
     setGame(_game);
   }
 
-  const changeToken = (t) => {
+  const changeToken = (t, d) => {
     setToken(t)
+    setTokenDate(d)
   }
 
   const getToken = () => {
@@ -206,7 +207,7 @@ export const App = () => {
       <SplitCol>
         <View activePanel={activePanel}>
           <Preload id="preload" fetchedUser={fetchedUser} loading={loading} getPlayer={getPlayer} player={player}/>
-          <Intro id="intro" fetchedUser={fetchedUser} getPlayer={getPlayer} player={player} changeToken={changeToken}/>
+          <Intro id="intro" fetchedUser={fetchedUser} player={player} changeToken={changeToken} changePlayer={updatePlayer}/>
           <Home id="home" fetchedUser={fetchedUser} player={player} token={token} getPlayer={getPlayer} setModal={changeModal} socket={socket} setPlayer={updatePlayer}/>
           <Persik id="persik" />
           <Games id="games" token={token} player={player} setModal={changeModal} setGame={changeGame} getPlayer={getPlayer} socket={socket}/>
