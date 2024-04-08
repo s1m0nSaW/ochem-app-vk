@@ -53,6 +53,7 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
   const handleFreeRsvp = async () => {
     if(player.rsvpStatus){
         const data = { token: token }
+        console.log(token)
         await axios.patch('https://ochem.ru/api/rsvp-date', data)
         .then((data)=>setPlayer(data.data))
         .catch((err)=>{

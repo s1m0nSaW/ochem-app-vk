@@ -10,7 +10,7 @@ import photo4 from "../img/photo4.png";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import axios from "axios";
 
-export const Intro = ({ id, fetchedUser, getPlayer, player }) => {
+export const Intro = ({ id, fetchedUser, getPlayer, player, changeToken }) => {
     const routeNavigator = useRouteNavigator();
     const [step, setStep] = React.useState(1);
 
@@ -26,6 +26,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player }) => {
                 const data = await axios.post('https://ochem.ru/api/get-token', fields);
         
                 if (data.data.token) {
+                    changeToken(data.data.token)
                     bridge.send('VKWebAppStorageSet', {
                         key: 'token',
                         value: data.data.token
@@ -80,6 +81,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player }) => {
                     console.log(data)
             
                     if (data.data.token) {
+                        changeToken(data.data.token)
                         bridge.send('VKWebAppStorageSet', {
                             key: 'token',
                             value: data.data.token
@@ -185,6 +187,7 @@ export const Intro = ({ id, fetchedUser, getPlayer, player }) => {
 Intro.propTypes = {
     id: PropTypes.string.isRequired,
     getPlayer: PropTypes.func.isRequired,
+    changeToken: PropTypes.func,
     player: PropTypes.object,
     fetchedUser: PropTypes.shape({
         id: PropTypes.number,
