@@ -1,72 +1,30 @@
 import React from "react";
 import { Button, Panel, PanelHeader, PanelHeaderBack, Placeholder } from "@vkontakte/vkui";
 import PropTypes from "prop-types";
-import bridge from "@vkontakte/vk-bridge";
+import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 
 import photo1 from "../img/photo1.png";
 import photo2 from "../img/photo2.png";
 import photo3 from "../img/photo3.png";
 import photo4 from "../img/photo4.png";
-import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
-import axios from "axios";
 
-export const Intro = ({ id, fetchedUser, player, changeToken, changePlayer }) => {
+export const Intro = ({ id, fetchedUser, socket, closeSnack }) => {
     const routeNavigator = useRouteNavigator();
     const [step, setStep] = React.useState(1);
+    const [player, setPlayer] = React.useState(null);
 
     const nextStep = () => {
         setStep(step + 1)
     }
-    const alreadyRegistered = async () => {
-        if (fetchedUser) {
-            try {
-                const fields = {
-                    vkid: fetchedUser.id,
-                }
-                const data = await axios.post('https://ochem.ru/api/get-token', fields);
-        
-                if (data.data.token) {
-                    changeToken(data.data.token, data.data.tokenDate.toString())
-                    bridge.send('VKWebAppStorageSet', {
-                        key: 'token',
-                        value: data.data.token
-                       })
-                       .then((data) => { 
-                         if (data.result) {
-                           // Значение переменной задано
-                           console.log(data.result);
-                         }
-                       })
-                       .catch((error) => {
-                         // Ошибка
-                         console.log(error);
-                       });
-                    bridge.send('VKWebAppStorageSet', {
-                        key: 'tokenDate',
-                        value: data.data.tokenDate.toString()
-                       })
-                       .then((data) => { 
-                         if (data.result) {
-                           // Значение переменной задано
-                           console.log(data.result);
-                         }
-                       })
-                       .catch((error) => {
-                         // Ошибка
-                         console.log(error);
-                       });
-                    changePlayer(data.data.user)
-                    routeNavigator.go('/home')
-                } 
-            } catch (err) {
-                console.log(err);
-                routeNavigator.go('/')
-            }
-        }
+
+    const alreadyRegistered = () => {
+        const fields = {vkid: fetchedUser.id,}
+        socket.emit('already', fields);
+        routeNavigator.go("/home");
     }
 
     const registration = async () => {
-        if(player){
+        if(player.firstName !== '$2b$10$T72I44FcHBIcS81xrkFY3e2TJwaaTVLFp7d5wuddKeVEuc2.3WR0G'){
             alreadyRegistered()
         } else {
             if (fetchedUser) {
@@ -77,56 +35,22 @@ export const Intro = ({ id, fetchedUser, player, changeToken, changePlayer }) =>
                         firstName: fetchedUser.first_name,
                         avaUrl: fetchedUser.photo_200,
                     }
-                    const data = await axios.post('https://ochem.ru/api/auth/register', fields);
-            
-                    if (data.data.token) {
-                        changeToken(data.data.token, data.data.tokenDate.toString())
-                        bridge.send('VKWebAppStorageSet', {
-                            key: 'token',
-                            value: data.data.token
-                           })
-                           .then((data) => { 
-                             if (data.result) {
-                               // Значение переменной задано
-                               console.log(data.result);
-                             }
-                           })
-                           .catch((error) => {
-                             // Ошибка
-                             console.log(error);
-                           });
-                        bridge.send('VKWebAppStorageSet', {
-                            key: 'tokenDate',
-                            value: data.data.tokenDate.toString()
-                           })
-                           .then((data) => { 
-                             if (data.result) {
-                               // Значение переменной задано
-                               console.log(data.result);
-                             }
-                           })
-                           .catch((error) => {
-                             // Ошибка
-                             console.log(error);
-                           });
-                        changePlayer(data.data.user)
-                        routeNavigator.go('/home')
-                    } 
+                    socket.emit('register', fields);
+                    routeNavigator.go("/home");
+                    
                 } catch (err) {
                     console.log(err);
-                    routeNavigator.go('/')
                 }
             }
         }
     };
 
     React.useEffect(()=>{
-        if(player !== null) {
-            if(player.status !== 'firstTime'){
-                routeNavigator.go('/')
-            }
-        }
-    },[player,routeNavigator])
+        socket.on("updatedUser", ({ data }) => {
+            setPlayer(data.user)
+            closeSnack()
+        });
+    },[socket, closeSnack])
 
     return (
         <Panel id={id}>
@@ -185,16 +109,7 @@ export const Intro = ({ id, fetchedUser, player, changeToken, changePlayer }) =>
 
 Intro.propTypes = {
     id: PropTypes.string.isRequired,
-    changeToken: PropTypes.func,
-    changePlayer: PropTypes.func,
-    player: PropTypes.object,
-    fetchedUser: PropTypes.shape({
-        id: PropTypes.number,
-        photo_200: PropTypes.string,
-        first_name: PropTypes.string,
-        last_name: PropTypes.string,
-        city: PropTypes.shape({
-          title: PropTypes.string,
-        }),
-      }),
+    fetchedUser: PropTypes.object,
+    socket: PropTypes.object,
+    closeSnack: PropTypes.func,
 };

@@ -1,11 +1,10 @@
 import React from "react";
-import axios from "axios";
 import PropTypes from 'prop-types';
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import { Avatar, Button, ButtonGroup, Caption, Card, CellButton, Div, FormItem, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
 import { Icon20Favorite, Icon20DeleteOutline } from '@vkontakte/icons';
 
-const TheEnd = ({ user, friend, game, token, socket, makeCompliment }) => {
+const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
     const routeNavigator = useRouteNavigator();
     const [ connecting, setConnecting ] = React.useState(false);
     const [ answereds, setAnswereds ] = React.useState();
@@ -42,31 +41,9 @@ const TheEnd = ({ user, friend, game, token, socket, makeCompliment }) => {
         }
     }
 
-    const onUpdateUserGames = (userID, message, severity) => {
-        socket.emit("upGames", { userId: userID });
-        const data = {
-            userId: userID,
-            message: message, 
-            severity: severity,
-        }
-        socket.emit("socketNotification", data);
-    };
-
     const removeGame = async () => {
         if (window.confirm('Удалить все данные игры, включая переписку?')) {
-            socket.emit("removeGame", { gameID: game._id});
-            await axios.delete(`https://ochem.ru/api/game/${game._id}`).then((data)=>{
-                if(data) {
-                    if(user._id === game.user1){
-                        onUpdateUserGames(game.user2, `${user.nickname} удалил игру`, 'error')
-                    } else {
-                        onUpdateUserGames(game.user1, `${user.nickname} удалил игру`, 'error')
-                    }
-                    routeNavigator.go('/home')
-                }
-            }).catch((err)=>{
-                console.warn(err); 
-            });
+            socket.emit("removeGame", { vkid: user.vkid, gameId: game._id });
         }
     }
 
@@ -78,48 +55,35 @@ const TheEnd = ({ user, friend, game, token, socket, makeCompliment }) => {
     const RateGame = async () => {
         makeCompliment();
         const fields = {
-            theme: rating.theme,
+            ratingId: rating._id,
             rate: value,
             gameId: game._id,
-            token,
         }
         setDisabled(true)
-        await axios.post(`https://ochem.ru/api/up-rating/${rating._id}`, fields).then((data)=>{
-            console.log(data)
-        }).catch((err)=>{
-            console.warn(err);
-        });
+        socket.emit("updateRating", fields);
+
         const data = {
-            userId: friend._id,
+            userId: friend.vkid,
             message: `${user.nickname} оценил игру в ${value} звезд`, 
             severity: 'success',
         }
         socket.emit("socketNotification", data);
     }
 
-    React.useEffect(()=>{
-        const getRating = async () => {
-            const fields = { theme: game.theme, token}
-            await axios.post(`https://ochem.ru/api/get-rating`, fields).then((data)=>{
-                setRating(data.data)
-            }).catch((err)=>{
-                console.warn(err);
-            });
-        };
-        const getAnswereds = async () => {
-            const fields = { token }
-            await axios.post(`https://ochem.ru/api/answereds/${game._id}`, fields).then((data)=>{
-                setAnswereds(data.data)
-            }).catch((err)=>{
-                console.warn(err);
-            });
-        };
-        if (game) {
-            getRating()
-            getAnswereds()
+    React.useEffect(() => {
+        socket.on("onTheEnd", ({ data }) => {
+            console.log('data is come:', data)
+            setRating(data.rating)
+            setAnswereds(data.answereds)
             setConnecting(true)
-        }
-    },[game, token])
+        });
+    },[socket]);
+
+    React.useEffect(() => {
+        socket.on("onRemoveGame", ({ data }) => {
+            if(data) routeNavigator.go('/')
+        });
+    },[socket, routeNavigator]);
 
     return (
         <>
@@ -204,10 +168,9 @@ const TheEnd = ({ user, friend, game, token, socket, makeCompliment }) => {
 export default TheEnd;
 
 TheEnd.propTypes = {
-    game: PropTypes.object,
     user: PropTypes.object,
     friend: PropTypes.object,
-    token: PropTypes.string,
+    game: PropTypes.object,
     socket: PropTypes.object,
     makeCompliment: PropTypes.func,
 };

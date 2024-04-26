@@ -2,7 +2,6 @@ import { Div, FixedLayout, Panel, PanelHeader, PanelHeaderBack, PanelSpinner, Se
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import React from "react";
-import axios from "axios";
 
 import { WhoIsFirst } from "../componets/WhoIsFirst.js";
 import ActiveStep from "../componets/ActiveStep.js";
@@ -11,107 +10,82 @@ import Chat from "../componets/Chat.js";
 import ComlimentModal from "../componets/ComlimentModal.js";
 import UserInfoModal from "../componets/UserInfoModal.js";
 
-export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
+export const Game = ({ id, fetchedUser, socket, setModal }) => {
     const fixedLayoutInnerElRef = React.useRef();
     const routeNavigator = useRouteNavigator();
     const [ connecting, setConnecting ] = React.useState(false);
+
     const [ friend, setFriend ] = React.useState(null);
+    const [ user, setUser ] = React.useState(null);
+    const [ game, setGame ] = React.useState(null);
     const [ questions, setQuestions ] = React.useState(null);
     const [ messages, setMessages ] = React.useState();
+
     const [ answered, setAnswered ] = React.useState(null);
     const [ rateGame, setRateGame ] = React.useState(false);
     const [bottomPadding, setBottomPadding] = React.useState(0);
     const [ value, setValue ] = React.useState('');
 
-    const getGame = async () => {
-        const fields = { token: token }
-        await axios.post(`https://ochem.ru/api/game/${game._id}`, fields).then((data)=>{
-            setGame(data.data)
-        }).catch((err)=>{
-            console.warn(err);
-        });
-    };
-
     const nextQuestion = () => {
+        console.log('turn:', game.turn)
         if(game.turn === user._id){
-            setTurn(friend._id, game.activeStep + 1)
+            const fields = { userId: friend._id, gameId: game._id }
+            socket.emit('nextStep', fields);
+            console.log('userId:',friend._id)
         } else {
-            setTurn(user._id, game.activeStep + 1)
+            const fields = { userId: user._id, gameId: game._id }
+            socket.emit('nextStep', fields);
+            console.log('userId:',user._id)
         }
     }
 
-    const setTurn = async (u_id, step) => {
+    const setTurn = async (u_id) => {
         setConnecting(false)
-        const fields = { userId: u_id, token: token }
-        await axios.post(`https://ochem.ru/api/begin-game/${game._id}`, fields).catch((err)=>{console.warn(err);});
-        newAnswered(u_id, step);
-        socket.emit("updateGame", { gameId: game._id });
+        const fields = { 
+            userId: u_id,
+            gameId: game._id
+        }
+        socket.emit('setTurn', fields);
     }
 
     const modalClose = () => { setModal(null)}
 
     const makeCompliment = () => {
-        setModal(<ComlimentModal player={user} friend={friend} socket={socket} token={token} modalClose={modalClose}/>)
+        setModal(<ComlimentModal player={user} friend={friend} socket={socket} modalClose={modalClose}/>)
     }
 
     const userInfo = () => {
-        setModal(<UserInfoModal friend={friend} token={token} modalClose={modalClose}/>)
-    }
-
-    const newAnswered = (u_id,step) => {
-        const data = {
-            token: token,
-            questionId: questions[step]._id,
-            gameId: game._id,
-            turn: u_id,
-            user1: game.user1,
-            user2: game.user2,
-            answer1: 'none',
-            answer2: 'none',
+        const fields = { 
+            vkid: user.vkid,
+            friendId: friend._id
         }
-        axios.post(`https://ochem.ru/api/answer`, data)
-        .then((data)=>{
-            updateGame(data.data._id, step)
-        })
-        .catch((err)=>console.warn(err));
-    }
-
-    const updateGame = (answeredId, activeStep) => {
-        const fields = { answeredId, activeStep, token }
-        axios.post(`https://ochem.ru/api/up-game/${game._id}`, fields)
-        .then((data)=>setGame(data.data))
-        .catch((err)=>{console.warn(err);});
-        socket.emit("updateGame", { gameId: game._id });
+        socket.emit('getUserCompliment', fields);
+        setModal(<UserInfoModal friend={friend} socket={socket} modalClose={modalClose}/>)
     }
 
     const updateAnswered = async ( userId, answer, correct ) => {
         if (correct === 'none' || correct === '' || !correct){
             if (userId === answered.user1){
-                const fields = { answer1: answer, answer2: 'none', correct: 'none', token }
-                await axios.post(`https://ochem.ru/api/up-answer/${answered._id}`, fields).catch((err)=>{console.warn(err);});
-                socket.emit("upAnswered", { gameId: game._id, answeredId: answered._id })
+                const fields = { answer1: answer, answer2: 'none', correct: 'none', gameId: game._id, id: answered.questionId }
+                socket.emit("upAnswered", fields)
             } else if (userId === answered.user2){
-                const fields = { answer2: answer, answer1: 'none', correct: 'none', token }
-                await axios.post(`https://ochem.ru/api/up-answer/${answered._id}`, fields).catch((err)=>{console.warn(err);});
-                socket.emit("upAnswered", { gameId: game._id, answeredId: answered._id })
+                const fields = { answer2: answer, answer1: 'none', correct: 'none', gameId: game._id, id: answered.questionId }
+                socket.emit("upAnswered", fields)
             }
         } else {
             if (userId === answered.user1){
-                const fields = { answer1: answer, answer2: 'none', correct: correct, token }
-                await axios.post(`https://ochem.ru/api/up-answer/${answered._id}`, fields).catch((err)=>{console.warn(err);});
-                socket.emit("upAnswered", { gameId: game._id, answeredId: answered._id })
+                const fields = { answer1: answer, answer2: 'none', correct: correct, gameId: game._id, id: answered.questionId }
+                socket.emit("upAnswered", fields)
             } else {
-                const fields = { answer2: answer, answer1: 'none', correct: correct, token }
-                await axios.post(`https://ochem.ru/api/up-answer/${answered._id}`, fields).catch((err)=>{console.warn(err);});
-                socket.emit("upAnswered", { gameId: game._id, answeredId: answered._id })
+                const fields = { answer2: answer, answer1: 'none', correct: correct, gameId: game._id, id: answered.questionId }
+                socket.emit("upAnswered", fields)
             }
         }
-        getGame();
     }
 
     const rateTheGame = () => {
+        socket.emit("theEnd", { gameId: game._id, theme: game.theme });
         setRateGame(true)
-        socket.emit("updateGame", { gameId: game._id });
     }
 
     const sendMessage = async () => {
@@ -120,12 +94,10 @@ export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
             content: value,
             gameId: game._id,
             date: +new Date(),
-            token,
         };
-        await axios.post(`https://ochem.ru/api/message`, fields).catch((err)=>{console.warn(err);});
         socket.emit("sendMessage", fields);
         const data = {
-            userId: friend._id,
+            userId: friend.vkid,
             message: `Сообщение от ${user.firstName}`, 
             severity: 'info'
         }
@@ -143,21 +115,34 @@ export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
         }
     };
 
+    const onClickBack = () => {
+        const fields = { vkid: user.vkid };
+        socket.emit('getGames', fields);
+        socket.emit('games', fields);
+        routeNavigator.go('/games')
+    }
+
+    const timeout = setTimeout(()=>{
+        if(game === null && fetchedUser){
+            const fields = { vkid: fetchedUser.id };
+            socket.emit('getGames', fields);
+            socket.emit('games', fields);
+            routeNavigator.go('/games')
+        }
+    },2000)
+
     React.useEffect(() => {
-        const searchParams = { gameId: game?._id, userId: user?._id };
-        socket.emit('join', searchParams);
+        if(game && user){
+            const searchParams = { gameId: game._id, userId: user._id };
+            socket.emit('join', searchParams);
+        }
     },[game, user, socket]);
 
     React.useEffect(() => {
-        const getMessages = async () => {
-            const data = { token }
-            await axios.post(`https://ochem.ru/api/messages/${game._id}`, data).then((data)=> setMessages(data.data.reverse())).catch((err)=>{console.warn(err);});
-        };
-
-        socket.on("message", ({ data }) => {
-            if(data) getMessages()
+        socket.on("gameMessages", ({ data }) => {
+            setMessages(data)
         });
-    },[socket, id, game, token]);
+    },[socket]);
 
     React.useEffect(() => {
         socket.on("deleteGame", ({ data }) => {
@@ -168,93 +153,52 @@ export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
     },[socket, routeNavigator]);
 
     React.useEffect(() => {
-        const updateGame = async (_id) => {
-            const fields = { token: token }
-            await axios.post(`https://ochem.ru/api/game/${_id}`, fields).then((data)=>{
-                setGame(data.data)
-            }).catch((err)=>{
-                console.warn(err);
-            });
-        };
-        socket.on("update", ({ data }) => {
-            updateGame(data.gameId)
+        socket.on("updatedGame", ({ data }) => {
+            clearTimeout(timeout)
+            if(game !== data) setGame(data)
+            setConnecting(true)
         });
-    },[socket, setGame, token]);
+    },[socket, game, timeout]);
 
     React.useEffect(() => {
-        const updateAnswered = async (id) => {
-            const data = { token }
-                await axios.post(`https://ochem.ru/api/answer/${id}`, data).then((data)=>{
-                setAnswered(data.data)
-            }).catch((err)=>{
-                console.warn(err);
-            });
-        };
-        socket.on("answered", ({ data }) => {
-            updateAnswered(data.aswId)
+        socket.on("answered", (data) => {
+            if(answered !== data)setAnswered(data.data)
         });
-    },[socket, token]);
+    },[socket, answered]);
 
-    React.useEffect(()=>{
-        const getQuestions = async () => {
-            const fields = { theme: game.theme, token: token };
-            await axios.post(`https://ochem.ru/api/questions`, fields).then((data)=>{
-                setQuestions(data.data)
-                //console.log('questions получены')
-            }).catch((err)=>{console.warn(err);});
-        };
+    React.useEffect(() => {
+        socket.on("questions", (data) => {
+            if(questions !== data) setQuestions(data.data)
+        });
+    },[socket, questions]);
 
-        const getUser2 = async () => {
-            let friend
-            if(game.user1 === user._id){
-                friend = game.user2
-            } else { friend = game.user1 }
-            const data = { id: friend }
-            await axios.post(`https://ochem.ru/api/get-user`, data).then((data)=>{
-                setConnecting(true);
-                setFriend(data.data)
-            }).catch((err)=>{console.warn(err);});
-        };
+    React.useEffect(() => {
+        socket.on("playingGame", (data) => {
+            if(user !== data.data.user) setUser(data.data.user)
+            if(friend !== data.data.friend) setFriend(data.data.friend)
+        });
+    },[socket, user, friend]);
 
-        const getAnswered = async () => {
-            if(game.answered) {
-                const data = { token }
-                await axios.post(`https://ochem.ru/api/answer/${game.answered}`, data).then((data)=>{
-                    setAnswered(data.data)
-                    //console.log('answered получен')
-                }).catch((err)=>{
-                    console.warn(err);
-                });
-            }
-        };
-
-        const getMessages = async () => {
-            const data = { token }
-            await axios.post(`https://ochem.ru/api/messages/${game._id}`, data).then((data)=> setMessages(data.data.reverse())).catch((err)=>{console.warn(err);});
-        };
-
-        if(game) {
-            getQuestions();
-            getAnswered();
-            getMessages();
-            getUser2();
-        } else {
-            routeNavigator.go('/home')
-        }
-    },[game, user, routeNavigator, token]);
+    React.useEffect(() => {
+        socket.on("error", ({ data }) => {
+            console.log(data)
+        });
+    },[socket]);
 
     return (
         <Panel id={id}>
-            <PanelHeader before={<PanelHeaderBack onClick={() => routeNavigator.back()} />}>
-            {game.gameName}
+            <PanelHeader before={<PanelHeaderBack onClick={onClickBack} />}>
+            {game?.gameName}
             </PanelHeader>
             {connecting === false ? <PanelSpinner style={{height:'80vh'}}>Данные загружаются, пожалуйста, подождите...</PanelSpinner>:
             <Div>
                 {game?.turn === null ? 
                     <WhoIsFirst user={user} friend={friend} setTurn={setTurn} game={game}/>
-                    :<>{answered && game && rateGame === false ? <ActiveStep
-                        question={questions[game.activeStep]}
-                        answered={answered} 
+                    :
+                    <>{rateGame === false ? 
+                    <ActiveStep
+                        question={questions && questions[game.activeStep]}
+                        answered={answered && answered} 
                         user={user}
                         game={game}
                         friend={friend}
@@ -264,7 +208,7 @@ export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
                         questions={questions}
                         friendInfo={userInfo}
                     />:
-                    <TheEnd user={user} friend={friend} game={game} token={token} socket={socket} makeCompliment={makeCompliment}/>}
+                    <TheEnd user={user} friend={friend} game={game} socket={socket} makeCompliment={makeCompliment}/>}
                 </>}
             </Div>}
             <Div>
@@ -289,10 +233,7 @@ export const Game = ({ id, game, user, token, setGame, socket, setModal }) => {
 
 Game.propTypes = {
     id: PropTypes.string.isRequired,
-    game: PropTypes.object,
-    user: PropTypes.object,
-    token: PropTypes.string,
-    setGame: PropTypes.func,
+    fetchedUser: PropTypes.object,
     socket: PropTypes.object,
     setModal: PropTypes.func,
 };

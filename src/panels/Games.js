@@ -2,83 +2,153 @@ import { Counter, Group, HorizontalScroll, Panel, PanelHeader, PanelHeaderBack, 
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
-import axios from "axios";
 
 import AllGames from "../componets/AllGames.js";
 import GamesList from "../componets/GamesList.js";
 import Snack from "../componets/Snack.js";
 
-export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket }) => {
+export const Games = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePage }) => {
     const [snackbar, setSnackbar] = useState(false);
     const [severity, setSeverity] = useState('info');
     const [message, setMessage] = useState('');
-    const [selected, setSelected] = useState('my')
+    const [selected, setSelected] = useState('my');
     const routeNavigator = useRouteNavigator();
     const [incomingRequestsCount, setIncomingRequestsCount] = useState(0);
     const [outgoingRequestsCount, setOutgoingRequestsCount] = useState(0);
+    const [player, setPlayer] = useState(null);
+    const [games, setGames] = useState(null);
 
     const onCloseSnack = () => {
         setMessage('');
         setSeverity('info');
         setSnackbar(false);
     }
-    
-    const onOpenSnackBar = (mes, sev) => {
-        setMessage(mes);
-        setSeverity(sev);
-        setSnackbar(true);
+
+    const onClickBack = () => {
+        onChangePage()
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('getUser', fields);
+        routeNavigator.go('/home')
     }
 
-    const onUpdateUserGames = (userID, message, severity) => {
-        socket.emit("upGames", { userId: userID });
-        const data = {
-            userId: userID,
-            message: message, 
-            severity: severity,
-        }
-        socket.emit("socketNotification", data);
-    };
+    const onClickAll = () => {
+        onChangePage()
+        setGames(null)
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('getAllGames', fields);
+        setSelected("all")
+    }
 
-    useEffect(() => {
-        socket.on("updateGames", ({ data }) => {
-            if(data) getPlayer();
-        });
-    },[socket, getPlayer]);
+    const onClickMy = () => {
+        onChangePage()
+        setGames(null)
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('games', fields);
+        setSelected("my")
+    }
+
+    const onClickIn = () => {
+        onChangePage()
+        setGames(null)
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('gamesIn', fields);
+        setSelected("in")
+    }
+
+    const onClickOut = () => {
+        onChangePage()
+        setGames(null)
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('gamesOut', fields);
+        setSelected("out")
+    }
+
+    const removeGame = (gameId) => {
+        const fields = { vkid: fetchedUser.id, gameId: gameId };
+        socket.emit('removeGame', fields);
+    }
+
+    const acceptGame = async (gameId) => {
+        const fields = { gameId: gameId };
+        socket.emit('acceptGame', fields);
+    }
+    
+    const setGame = async (gameId) => {
+        const fields = { vkid: fetchedUser.id, gameId: gameId };
+        socket.emit('setGame', fields);
+    }
 
     useEffect(()=>{
-        const getIncoming = async () => {
-            const fields = {
-                games: player.gamesIn, token
+        socket.on("onRemoveGame", ({ data }) => {
+            if(data){
+                setGames(null)
+                const fields = { vkid: fetchedUser.id };
+                socket.emit('getGames', fields);
+                if(selected === "my") {
+                    socket.emit('games', fields);
+                    setSelected("my")
+                }
+                if(selected === "in") {
+                    socket.emit('gamesIn', fields);
+                    setSelected("in")
+                }
+                if(selected === "out") {
+                    socket.emit('gamesOut', fields);
+                    setSelected("out")
+                }
+            } 
+        });
+    },[socket, selected, fetchedUser])
+
+    useEffect(()=>{
+        socket.on("gameAccepted", ({ data }) => {
+            if(data){
+                setGames(null)
+                const fields = { vkid: fetchedUser.id };
+                socket.emit('getGames', fields);
+                if(selected === "in") {
+                    socket.emit('gamesIn', fields);
+                    setSelected("in")
+                }
+                if(selected === "out") {
+                    socket.emit('gamesOut', fields);
+                    setSelected("out")
+                }
+            } 
+        });
+    },[socket, selected, fetchedUser])
+
+    useEffect(()=>{
+        socket.on("myGames", ({ data }) => {
+            if(data.games !== games){
+                setGames(data);
+                closeSnack()
             }
-            await axios.post('https://ochem.ru/api/games', fields).then((data)=>{
-                setIncomingRequestsCount(data.data.length)
-            }).catch((err)=>{
-                console.warn(err); 
-            });
-        }
-        const getOutgoing = async () => {
-            const fields = {
-                games: player.gamesOut, token
-            }
-            await axios.post('https://ochem.ru/api/games', fields).then((data)=>{
-                setOutgoingRequestsCount(data.data.length)
-            }).catch((err)=>{
-                console.warn(err); 
-            });
-        }
-        if(player){
-            getIncoming();
-            getOutgoing();
-        } else {
-            routeNavigator.go('/home')
-        }
-    },[ player, token, routeNavigator]);
+        });
+    },[socket, games, closeSnack])
+
+    useEffect(()=>{
+        socket.on("updatedUser", ({ data }) => {
+            if(data.user !== player){
+                setPlayer(data.user)
+            } 
+        });
+    },[socket, player])
+
+    useEffect(() => {
+        socket.on("incoming", ({ data }) => {
+            setIncomingRequestsCount(data)
+        });
+        socket.on("outgoing", ({ data }) => {
+            setOutgoingRequestsCount(data)
+        });
+    },[socket]);
 
     return (
         <Panel id={id}>
             <PanelHeader
                 before={
-                    <PanelHeaderBack onClick={() => routeNavigator.back()} />
+                    <PanelHeaderBack onClick={onClickBack} />
                 }
             >
                 Мои игры
@@ -92,7 +162,7 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
                         <TabsItem
                             id="all"
                             selected={selected === "all"}
-                            onClick={() => setSelected("all")}
+                            onClick={onClickAll}
                             aria-controls="tab-all"
                         >
                             Все игры
@@ -100,7 +170,7 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
                         <TabsItem
                             id="my"
                             selected={selected === "my"}
-                            onClick={() => setSelected("my")}
+                            onClick={onClickMy}
                             aria-controls="tab-my"
                         >
                             Мои игры
@@ -108,7 +178,7 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
                         <TabsItem
                             id="in"
                             selected={selected === "in"}
-                            onClick={() => setSelected("in")}
+                            onClick={onClickIn}
                             aria-controls="tab-in"
                             after={incomingRequestsCount !== 0 && <Counter size="s" mode="prominent">
                             {incomingRequestsCount}
@@ -119,7 +189,7 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
                         <TabsItem
                             id="out"
                             selected={selected === "out"}
-                            onClick={() => setSelected("out")}
+                            onClick={onClickOut}
                             aria-controls="tab-out"
                             after={outgoingRequestsCount !== 0 && <Counter size="s" mode="prominent">
                             {outgoingRequestsCount}
@@ -132,43 +202,33 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
             </Group>
             <Group>
                 {selected === "all" && (
-                    <AllGames token={token} setModal={setModal} />
+                    <AllGames setModal={setModal} socket={socket} />
                 )}
                 {selected === "my" && (
                     <GamesList
-                        token={token}
-                        content={player?.games}
                         page={"my"}
-                        onSuccess={onOpenSnackBar}
-                        getPlayer={getPlayer}
+                        games={games}
+                        acceptGame={acceptGame}
+                        removeGame={removeGame}
                         setGame={setGame}
-                        socket={socket}
-                        player={player}
-                        onUpdate={onUpdateUserGames}
                     />
                 )}
                 {selected === "in" && (
                     <GamesList
-                        token={token}
-                        content={player?.gamesIn}
                         page={"in"}
-                        onSuccess={onOpenSnackBar}
-                        getPlayer={getPlayer}
-                        socket={socket}
-                        player={player}
-                        onUpdate={onUpdateUserGames}
+                        games={games}
+                        acceptGame={acceptGame}
+                        removeGame={removeGame}
+                        setGame={setGame}
                     />
                 )}
                 {selected === "out" && (
                     <GamesList
-                        token={token}
-                        content={player?.gamesOut}
                         page={"out"}
-                        onSuccess={onOpenSnackBar}
-                        getPlayer={getPlayer}
-                        socket={socket}
-                        player={player}
-                        onUpdate={onUpdateUserGames}
+                        games={games}
+                        acceptGame={acceptGame}
+                        removeGame={removeGame}
+                        setGame={setGame}
                     />
                 )}
             </Group>
@@ -185,20 +245,9 @@ export const Games = ({ id, token, player, getPlayer, setModal, setGame, socket 
 
 Games.propTypes = {
     id: PropTypes.string.isRequired,
-    token:PropTypes.string,
-    getPlayer: PropTypes.func,
     setModal: PropTypes.func,
-    setGame: PropTypes.func,
-    player: PropTypes.shape({
-        _id: PropTypes.string,
-        status: PropTypes.string,
-        dailyRsvp: PropTypes.number,
-        rsvp: PropTypes.number,
-        rsvpStatus: PropTypes.bool,
-        rsvpDate: PropTypes.number,
-        games: PropTypes.array,
-        gamesOut: PropTypes.array,
-        gamesIn: PropTypes.array,
-    }),
     socket: PropTypes.object,
+    fetchedUser: PropTypes.object,
+    closeSnack: PropTypes.func,
+    onChangePage: PropTypes.func,
 };

@@ -1,62 +1,17 @@
 import React from "react";
-import axios from "axios";
 import { List, PanelSpinner, Placeholder, SimpleCell, Text } from "@vkontakte/vkui";
 import { Icon16CrownCircleFillVkDating, Icon28PlayCircleFillAzure, Icon28Done, Icon28Delete, Icon56BlockOutline } from '@vkontakte/icons';
 import PropTypes from 'prop-types';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 
-const GamesList = ({ token, content, page, onSuccess, getPlayer, setGame, socket, onUpdate, player }) => {
+const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
     const routeNavigator = useRouteNavigator();
-    const [games, setGames] = React.useState(null);
 
-    const selectGame = (_game) => {
+    const selectGame = (gameId) => {
         if(page === 'my'){
-            setGame(_game)
+            setGame(gameId)
             routeNavigator.go('/game')
         }
-    }
-
-    const removeGame = async (game) => {
-        socket.emit("removeGame", { gameID: game._id});
-        const fields = {
-            token: token,
-            game: game._id,
-            user1:game.user1,
-            user2:game.user2,
-            status: game.status,
-        }
-        await axios.post(`https://ochem.ru/api/del-game`, fields).then((data)=>{
-            if(data) {
-                onSuccess('Игра удалена', 'success')
-                if(player._id === game.user1){
-                    onUpdate(game.user2, `${player.nickname} удалил игру`, 'error')
-                } else {
-                    onUpdate(game.user1, `${player.nickname} удалил игру`, 'error')
-                }
-                getPlayer();
-            }
-        }).catch((err)=>{
-            console.warn(err); 
-        });
-    }
-
-    const acceptGame = async (game) => {
-        const fields = {
-            token: token
-        }
-        await axios.post(`https://ochem.ru/api/join/${game._id}`, fields).then((data)=>{
-            if(data) {
-                onSuccess('Игра принята', 'success');
-                if(player._id === game.user1){
-                    onUpdate(game.user2, `${player.nickname} согласен играть`, 'success')
-                } else {
-                    onUpdate(game.user1, `${player.nickname} согласен играть`, 'success')
-                }
-                getPlayer();
-            }
-        }).catch((err)=>{
-            console.warn(err); 
-        });
     }
 
     const deleteGame = async (game) => {
@@ -64,23 +19,6 @@ const GamesList = ({ token, content, page, onSuccess, getPlayer, setGame, socket
             removeGame(game);
         }
     }
-
-    React.useEffect(()=>{
-        const _getGames = async () => {
-            const fields = {
-                games: content,
-                token: token
-            }
-            await axios.post('https://ochem.ru/api/games', fields).then((data)=>{
-                setGames(data.data);
-            }).catch((err)=>{
-                console.warn(err); 
-            });
-        }
-        if(content){
-            _getGames();
-        }
-    },[token, content ]);
 
     return (
         <>
@@ -97,17 +35,17 @@ const GamesList = ({ token, content, page, onSuccess, getPlayer, setGame, socket
                         }}/>}</Text>}
                         after={
                             <>
-                            {page === 'my' && <Icon28Delete onClick={()=>deleteGame(game)}/>}
-                            {page === 'in' && <Icon28Delete onClick={()=>removeGame(game)}/>}
-                            {page === 'out' && <Icon28Delete onClick={()=>removeGame(game)}/>}
-                        </>
+                                {page === 'my' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
+                                {page === 'in' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
+                                {page === 'out' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
+                            </>
                         }
                         before={
                             <>
                                 {page === 'my' &&
-                                    <Icon28PlayCircleFillAzure  onClick={()=>selectGame(game)}/>}
+                                    <Icon28PlayCircleFillAzure  onClick={()=>selectGame(game._id)}/>}
                                 {page === 'in' &&
-                                    <Icon28Done onClick={()=>acceptGame(game)}/>}
+                                    <Icon28Done onClick={()=>acceptGame(game._id)}/>}
                                 </>
                         }
                     >
@@ -133,13 +71,9 @@ const GamesList = ({ token, content, page, onSuccess, getPlayer, setGame, socket
 export default GamesList;
 
 GamesList.propTypes = {
-    token:PropTypes.string,
-    content:PropTypes.array,
     page:PropTypes.string,
-    onSuccess:PropTypes.func,
-    getPlayer: PropTypes.func,
+    games: PropTypes.array,
+    acceptGame: PropTypes.func,
+    removeGame: PropTypes.func,
     setGame: PropTypes.func,
-    socket: PropTypes.object,
-    player: PropTypes.object,
-    onUpdate: PropTypes.func,
 };

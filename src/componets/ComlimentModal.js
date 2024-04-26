@@ -1,6 +1,5 @@
 import { Group, HorizontalCell, HorizontalScroll, Image, ModalCard, ModalRoot } from "@vkontakte/vkui";
 import bridge from "@vkontakte/vk-bridge";
-import axios from "axios";
 import PropTypes from "prop-types";
 
 const COMPLIMENTS = 'compliments';
@@ -126,7 +125,7 @@ const compliments = [
     },
 ];
 
-const ComlimentModal = ({ player, friend, socket, token, modalClose }) => {
+const ComlimentModal = ({ player, friend, socket, modalClose }) => {
 
     const createCompliment = async ( compliment ) => {
         const foundItem = compliments.find(comp => comp.name === compliment);
@@ -135,34 +134,10 @@ const ComlimentModal = ({ player, friend, socket, token, modalClose }) => {
             to: friend._id,  // не забудь заменить нв friend._id
             price: foundItem.id,
             image: foundItem.photo_300,
-            name: `От пользователя ${player.firstName}`,
-            token
+            name: `От пользователя ${player.firstName}`
         }
-    
-        await axios.post(`https://ochem.ru/api/compliment`, data).then((data)=>{
-            if(data) {
-                const fields = {
-                    userId: friend._id,
-                    message: `${player.firstName} подарил вам комплимент`, 
-                    severity: 'info'
-                }
-                socket.emit("socketNotification", fields);
-                const _fields = {
-                    userId: player._id,
-                    message: `Комплимент успешно подарен`, 
-                    severity: 'success'
-                }
-                socket.emit("socketNotification", _fields);
-            }
-        }).catch((err)=>{
-            console.warn(err);
-            const _fields = {
-                userId: player._id,
-                message: `Ошибка при создании комплимента`, 
-                severity: 'error'
-            }
-            socket.emit("socketNotification", _fields);
-        });
+
+        socket.emit("makeCompliment", data);
         modalClose()
     }
 
@@ -228,6 +203,5 @@ ComlimentModal.propTypes = {
     player: PropTypes.object,
     friend: PropTypes.object,
     socket: PropTypes.object,
-    token: PropTypes.string,
     modalClose: PropTypes.func,
 };

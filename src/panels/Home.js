@@ -1,7 +1,7 @@
-import { Panel, PanelHeader, Button, Group, Avatar, RichCell, ButtonGroup, CellButton } from '@vkontakte/vkui';
+import { Panel, PanelHeader, Button, Group, Avatar, RichCell, ButtonGroup, CellButton, PanelSpinner } from '@vkontakte/vkui';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
+import bridge from '@vkontakte/vk-bridge';
 import PropTypes from 'prop-types';
-import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Icon28AddCircleFillBlue, Icon28GameCircleFillBlue, Icon16CrownCircleFillVkDating, Icon24InfoCircleOutline, Icon12Coins,
   Icon12Add, Icon12Clock, Icon24CrownCircleFillVkDating, Icon28GiftCircleFillRed } from '@vkontakte/icons'
@@ -16,9 +16,10 @@ import TasksModal from '../componets/TasksModal';
 //Сервисный ключ доступа c7e29d85c7e29d85c7e29d8581c4f5f9a3cc7e2c7e29d85a2396e9f88a7c3a00de34a3c
 //защищенный ключ U0hwJw6k2EgpXr9LuqyG
 
-export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, socket, setPlayer }) => {
+export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePage }) => {
   const { photo_200, city, first_name, last_name } = { ...fetchedUser };
   const routeNavigator = useRouteNavigator();
+  const [player, setPlayer] = useState(null);
   const [snackbar, setSnackbar] = useState(false);
   const [severity, setSeverity] = useState('info');
   const [message, setMessage] = useState('');
@@ -50,34 +51,82 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
     return h + ' часов ' + m + ' минут';
   }
 
-  const handleFreeRsvp = async () => {
+  const handleFreeRsvp = () => {
     if(player.rsvpStatus){
-        const data = { token: token }
-        console.log(token)
-        await axios.patch('https://ochem.ru/api/rsvp-date', data)
-        .then((data)=>setPlayer(data.data))
-        .catch((err)=>{
-            console.warn(err); 
-        });
+      const fields = { vkid: fetchedUser.id };
+      socket.emit('getFreeRsvp', fields);
     } else {
-        const date = +new Date()
-        const timeToTrue = parseMillisecondsIntoReadableTime(player.rsvpDate - date)
-        getPlayer()
-        onOpenSnackBar(`Ежедневные бесплатные монеты через ${timeToTrue}`, 'info')
+      const date = +new Date()
+      const timeToTrue = parseMillisecondsIntoReadableTime(player.rsvpDate - date)
+      onOpenSnackBar(`Ежедневные бесплатные монеты через ${timeToTrue}`, 'info')
     }
   }
 
-  const newGame = () => {
-      setModal(<ModalCards 
-                  onCloseModals={()=>setModal(null)} 
-                  token={token} 
-                  getPlayer={getPlayer} 
-                  name={first_name} 
-                  onOpenSnackBar={onOpenSnackBar}
-                  player={player}
-                  user={fetchedUser}
-                  socket={socket}
-                />)
+  const getPlayer = () => {
+    const fields = { vkid: fetchedUser.id };
+    socket.emit('getUser', fields);
+  }
+
+  const myGames = () => {
+    onChangePage()
+    const fields = { vkid: fetchedUser.id };
+    socket.emit('getGames', fields);
+    socket.emit('games', fields);
+    routeNavigator.go('/games')
+  }
+
+  const getFriends = (token) => {
+    bridge.send('VKWebAppCallAPIMethod', {
+      method: 'friends.get',
+      params: {
+        v: '5.199',
+        access_token: token,
+        fields: 'photo_200,photo_100,nickname,first_name'
+      }})
+      .then((data) => { 
+        if (data.response) {
+          // Метод API выполнен
+          onChangePage()
+          newGame(data.response.items)
+        } 
+      })
+      .catch((error) => {
+        // Ошибка
+        console.log(error);
+      });
+  }
+
+  const getToken = () => {
+    bridge.send('VKWebAppGetAuthToken', { 
+      app_id: 51864614, 
+      scope: 'friends'
+      })
+      .then( (data) => { 
+        if (data.access_token) {
+          // Ключ доступа пользователя получен
+          getFriends(data.access_token)
+        } else {
+          onOpenSnackBar(`Чтобы приложение могло получить доступ к вашему списку друзей, необходимо предоставить ему соответствующие права доступа.`, 'error')
+        }
+      })
+      .catch( (error) => {
+        // Ошибка
+        console.log(error);
+      });
+  }
+
+  const newGame = (friends) => {
+    const fields = { vkid: fetchedUser.id };
+    socket.emit('getThemes', fields);
+    setModal(<ModalCards 
+                onCloseModals={()=>setModal(null)} 
+                name={first_name} 
+                onOpenSnackBar={onOpenSnackBar}
+                user={fetchedUser}
+                player={player}
+                socket={socket}
+                friends={friends}
+              />)
   }
 
   const openInfo = () => {
@@ -85,7 +134,7 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
   }
 
   const openTasks = () => {
-    setModal(<TasksModal modalClose={()=>setModal(null)} token={token} setPlayer={setPlayer} vkid={player.vkid}/>)
+    setModal(<TasksModal modalClose={()=>setModal(null)} vkid={fetchedUser.id} socket={socket}/>)
   }
 
   const getSubscribe = () => {
@@ -93,31 +142,70 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
   }
 
   const buyCoins = () => {
-    setModal(<Coins modalClose={()=>setModal(null)} getPlayer={getPlayer} token={token} player={player} onOpenSnackBar={onOpenSnackBar}/>)
+    setModal(<Coins modalClose={()=>setModal(null)} getPlayer={getPlayer} player={player} onOpenSnackBar={onOpenSnackBar}/>)
   }
 
   useEffect(()=>{
-    const getComps = async () => {
-      const fields = { id: player._id, token}
-      await axios.post(`https://ochem.ru/api/compliments`, fields).then((data)=>{
-          setComps(data.data)
-      }).catch((err)=>{
-          console.warn(err);
-      });
-  };
-    if(player === null){
-      getPlayer()
-    } else {
-      const searchParams = { userId: player._id };
-      socket.emit('joinUser', searchParams);
-      getComps()
+    const checkPromoter = async () => {
+      let tasks = 0
+      if(player !== null) {
+        if(player.status === 'promoter'){
+          bridge.send('VKWebAppGetLaunchParams')
+          .then((data) => { 
+              if (data) {
+                console.log('Параметры запуска получены',data);
+                // Параметры запуска получены
+                if(data.vk_are_notifications_enabled === 1) tasks +=1
+                if(data.vk_is_favorite === 1) tasks +=1
+              }
+          })
+          .catch((error) => {
+              // Ошибка
+              console.log(error);
+          });
+  
+          bridge.send('VKWebAppGetGroupInfo', {
+              group_id: 225433186
+              })
+              .then(async (data) => { 
+                if (data.is_member === 1) {
+                  // Данные о сообществе получены
+                  tasks +=1
+                  if(tasks < 3) {
+                    const data = { vkid: fetchedUser.id }
+                    socket.emit('checkPromoter', data);
+                  }
+                }
+              })
+              .catch((error) => {
+                // Ошибка
+                console.log(error);
+              });
+        }
+      }
     }
-  },[player, getPlayer, socket, token])
+    checkPromoter();
+  },[fetchedUser, player, socket])
+
+  useEffect(()=>{
+    socket.on("updatedUser", ({ data }) => {
+      if(data.user !== player){
+        setPlayer(data.user)
+        closeSnack();
+      } 
+    });
+  },[socket, closeSnack, player])
+
+  useEffect(()=>{
+    socket.on("compliments", ({ data }) => {
+      setComps(data.compliments)
+    });
+  },[socket])
 
   return (
       <Panel id={id}>
           <PanelHeader>Главная</PanelHeader>
-          {fetchedUser && (
+          {player ? (<>
               <Group>
                   <RichCell
                       before={photo_200 && <Avatar src={photo_200} />}
@@ -146,22 +234,23 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
                       }}/>}
                   </RichCell>
               </Group>
-          )}
+              
           {comps.length !== 0 && <Compliments comps={comps.reverse()}/>}
           <Group>
-            <CellButton onClick={newGame} centered before={<Icon28AddCircleFillBlue />}>
+            <CellButton onClick={getToken} before={<Icon28AddCircleFillBlue />}>
             Новая игра
             </CellButton>
-            <CellButton onClick={()=>routeNavigator.go('/games')} centered before={<Icon28GameCircleFillBlue />}>
+            <CellButton onClick={myGames} before={<Icon28GameCircleFillBlue />}>
             Мои игры
             </CellButton>
-            {player?.status === 'none' && <CellButton onClick={openTasks} centered before={<Icon28GiftCircleFillRed />}>
+            {player?.status === 'none' && <CellButton onClick={openTasks} before={<Icon28GiftCircleFillRed />}>
             Задания
             </CellButton>}
-            {player?.status !== 'sponsor' && <CellButton onClick={getSubscribe} centered before={<Icon24CrownCircleFillVkDating />}>
+            {player?.status !== 'sponsor' && <CellButton onClick={getSubscribe} before={<Icon24CrownCircleFillVkDating />}>
             Premium
             </CellButton>}
           </Group>
+          </>):<PanelSpinner style={{height:'80vh'}}>Данные загружаются, пожалуйста, подождите...</PanelSpinner>}
           {snackbar && <Snack severity={severity} message={message} onExit={onCloseSnack}/>}
       </Panel>
   );
@@ -169,11 +258,9 @@ export const Home = ({ id, fetchedUser, player, token, getPlayer, setModal, sock
 
 Home.propTypes = {
   id: PropTypes.string.isRequired,
-  getPlayer: PropTypes.func,
   setModal: PropTypes.func,
-  setPlayer: PropTypes.func,
-  token:PropTypes.string,
   fetchedUser: PropTypes.object,
-  player: PropTypes.object,
   socket: PropTypes.object,
+  closeSnack: PropTypes.func,
+  onChangePage: PropTypes.func,
 };

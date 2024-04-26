@@ -1,7 +1,6 @@
-export { Persik } from './Persik';
-export { Home } from './Home';
-export { Intro } from './Intro';
-export { Preload } from './Preload';
-export { Games } from './Games';
-export { Test } from './Test';
-export { Game } from './Game';
+export { Home } from './Home.js';
+export { Intro } from './Intro.js';
+export { Preload } from './Preload.js';
+export { Games } from './Games.js';
+export { Test } from './Test.js';
+export { Game } from './Game.js';

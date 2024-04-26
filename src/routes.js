@@ -13,7 +13,6 @@ export const DEFAULT_VIEW = 'default_view';
 export const DEFAULT_VIEW_PANELS = {
   INTRO: 'intro',
   HOME: 'home',
-  PERSIK: 'persik',
   PRELOAD: 'preload',
   GAMES: 'games',
   GAME: 'game',
@@ -27,7 +26,6 @@ export const routes = RoutesConfig.create([
       createPanel(DEFAULT_VIEW_PANELS.PRELOAD, '/', []),
       createPanel(DEFAULT_VIEW_PANELS.INTRO, `/${DEFAULT_VIEW_PANELS.INTRO}`, []),
       createPanel(DEFAULT_VIEW_PANELS.HOME, `/${DEFAULT_VIEW_PANELS.HOME}`, []),
-      createPanel(DEFAULT_VIEW_PANELS.PERSIK, `/${DEFAULT_VIEW_PANELS.PERSIK}`, []),
       createPanel(DEFAULT_VIEW_PANELS.GAMES, `/${DEFAULT_VIEW_PANELS.GAMES}`, []),
       createPanel(DEFAULT_VIEW_PANELS.GAME, `/${DEFAULT_VIEW_PANELS.GAME}`, []),
       createPanel(DEFAULT_VIEW_PANELS.TEST, `/${DEFAULT_VIEW_PANELS.TEST}`, []),

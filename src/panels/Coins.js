@@ -2,11 +2,10 @@ import { Button, ButtonGroup, Image, ModalCard, ModalRoot, Spacing } from "@vkon
 import bridge from "@vkontakte/vk-bridge";
 import React from "react";
 import PropTypes from "prop-types";
-import axios from "axios";
 
 import coins from "../img/coins.png";
 
-const Coins = ({ getPlayer, token, player, modalClose, onOpenSnackBar }) => {
+const Coins = ({ getPlayer, player, modalClose, onOpenSnackBar, socket }) => {
     const [availableAds, setAvailableAds] = React.useState(false);
 
     const buyRsvp = (item) => {
@@ -34,11 +33,8 @@ const Coins = ({ getPlayer, token, player, modalClose, onOpenSnackBar }) => {
             .then(async (data) => {
                 if (data.result){
                     // Успех
-                    const data = { token: token }
-                    await axios.patch('https://ochem.ru/api/after-ads', data).catch((err)=>{
-                        console.warn(err); 
-                    });
-                    getPlayer()
+                    const data = { vkid: player.vkid }
+                    socket.emit('afterAds', data);
                     onOpenSnackBar(`Реклама показана. Вы получите одну монету.`, 'success');
                 // Ошибка
                 } else onOpenSnackBar(`Реклама не показана.`, 'error');
@@ -104,13 +100,6 @@ Coins.propTypes = {
     onOpenSnackBar: PropTypes.func,
     getPlayer: PropTypes.func,
     modalClose: PropTypes.func,
-    token:PropTypes.string,
-    player: PropTypes.shape({
-        adsStatus: PropTypes.bool,
-        status: PropTypes.string,
-        dailyRsvp: PropTypes.number,
-        rsvp: PropTypes.number,
-        rsvpStatus: PropTypes.bool,
-        rsvpDate: PropTypes.number,
-      }),
+    player: PropTypes.object,
+    socket: PropTypes.object,
 };

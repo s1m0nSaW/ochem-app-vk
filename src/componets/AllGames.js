@@ -1,10 +1,9 @@
 import React from "react";
-import axios from "axios";
 import { Group, List, ModalPage, ModalPageHeader, ModalRoot, PanelSpinner, SimpleCell } from "@vkontakte/vkui";
 import { Icon16CrownCircleFillVkDating,  } from '@vkontakte/icons';
 import PropTypes from 'prop-types';
 
-const AllGames = ({ token, setModal }) => {
+const AllGames = ({ setModal, socket }) => {
     const [rates, setRates] = React.useState(null);
     const [themes, setThemes] = React.useState();
 
@@ -21,13 +20,19 @@ const AllGames = ({ token, setModal }) => {
         }
     }
 
+    React.useEffect(() => {
+        socket.on("allgames", ({ data }) => {
+            setRates(data.rates)
+            setThemes(data.themes)
+        });
+    },[socket]);
+
     const openModal = (questions) => {
         setModal(
             <ModalRoot onClose={()=>setModal(null)} activeModal={'example'}>
                 <ModalPage
                     id="example"
                     onClose={()=>setModal(null)}
-                    settlingHeight={100}
                     header={
                     <ModalPageHeader>
                         Примеры вопросов
@@ -50,31 +55,6 @@ const AllGames = ({ token, setModal }) => {
             </ModalRoot>
         )
     }
-
-    React.useEffect(()=>{
-        const getRates = async () => {
-            try {
-                const data = { token: token }
-                const _rates = await axios.post('https://ochem.ru/api/all-rates', data)
-                if(_rates) {
-                    setRates(_rates.data)
-                }
-            } catch (err) {
-                console.warn(err)
-            }
-        }
-        const getThemes = async () => {
-            const data = { token: token }
-            await axios.post('https://ochem.ru/api/all-quest', data)
-            .then((data) => {
-                setThemes(data.data)
-            })
-            .catch(err => console.warn(err));
-        };
-        getThemes();
-        getRates();
-
-    },[token])
 
     return (
         <>{rates === null ? <PanelSpinner style={{ height:'50vh'}} >Данные загружаются, пожалуйста, подождите...</PanelSpinner>:
@@ -99,6 +79,6 @@ const AllGames = ({ token, setModal }) => {
 export default AllGames;
 
 AllGames.propTypes = {
-    token:PropTypes.string,
     setModal: PropTypes.func,
+    socket:PropTypes.object,
 };

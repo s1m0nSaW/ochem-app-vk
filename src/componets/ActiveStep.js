@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Avatar, Button, ButtonGroup, Card, Div, Group, SimpleCell, Text } from "@vkontakte/vkui";
+import { Avatar, Button, ButtonGroup, Card, Div, Group, SimpleCell, Subhead, Text } from "@vkontakte/vkui";
 
 const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo }) => {
     const [ variant, setVariant ] = React.useState(0);
@@ -21,22 +21,24 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
     }
 
     React.useEffect(()=>{
-        if(user._id === answered.user1){
-            if(answered.answer1 === question.answer1) setVariant(1)
-            if(answered.answer1 === question.answer2) setVariant(2)
-            if(answered.answer1 === question.answer3) setVariant(3)
-            if(answered.answer1 === question.answer4) setVariant(4)
-        } else if (user._id === answered.user2){
-            if(answered.answer2 === question.answer1) setVariant(1)
-            if(answered.answer2 === question.answer2) setVariant(2)
-            if(answered.answer2 === question.answer3) setVariant(3)
-            if(answered.answer2 === question.answer4) setVariant(4)
-        } 
+        if (answered){
+            if(user._id === answered.user1){
+                if(answered.answer1 === question.answer1) setVariant(1)
+                if(answered.answer1 === question.answer2) setVariant(2)
+                if(answered.answer1 === question.answer3) setVariant(3)
+                if(answered.answer1 === question.answer4) setVariant(4)
+            } else if (user._id === answered.user2){
+                if(answered.answer2 === question.answer1) setVariant(1)
+                if(answered.answer2 === question.answer2) setVariant(2)
+                if(answered.answer2 === question.answer3) setVariant(3)
+                if(answered.answer2 === question.answer4) setVariant(4)
+            } 
+            if(answered.answer1 === 'none' && answered.answer2 === 'none') setVariant(0)
+        }
 
-        if(answered.answer1 === 'none' && answered.answer2 === 'none') setVariant(0)
     },[answered, question, user])
-    return (
-        <React.Fragment>
+    return (<>
+        {answered && <React.Fragment>
         {answered.answer1 !== 'none' && answered.answer2 !== 'none' ?
         <Card>
         {answered.correct === 'none' ? 
@@ -44,30 +46,35 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
             {game.turn === user._id ?
                 <>
                 {answered.answer1 === answered.answer2 ?
-                    <SimpleCell subhead={`${friend.firstName} отгадал(-а)`}>
-                    Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}
-                    </SimpleCell>
+                    <div style={{ padding: 20 }}>
+                        <Subhead>{friend.firstName} отгадал(-а)</Subhead>
+                        <Text>Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Text>
+                    </div>
                     :
-                    <SimpleCell subhead={`${friend.firstName} не отгадал(-а)`}>
-                    Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}
-                    </SimpleCell>
+                    <div style={{ padding: 20 }}>
+                        <Subhead>{friend.firstName} не отгадал(-а)</Subhead>
+                        <Text>Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Text>
+                    </div>
                     }
                 </>:<>
                 {answered.answer1 === answered.answer2 ?
-                    <SimpleCell subhead={`Вы отгадали`}>
-                    Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}
-                    </SimpleCell>:
-                    <SimpleCell subhead={`Вы не отгадали`}>
-                    Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}
-                    </SimpleCell>
+                    <div style={{ padding: 20 }}>
+                        <Subhead>Вы отгадали</Subhead>
+                        <Text>Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Text>
+                    </div>:
+                    <div style={{ padding: 20 }}>
+                        <Subhead>Вы не отгадали</Subhead>
+                        <Text>Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Text>
+                    </div>
                 }
                 </>
             }
             </Div>
             :
-            <SimpleCell subhead={question._id === answered.questionId && <Text variant="body2">Правильный ответ: <b>{question?.correct}</b></Text>}>
-            {question._id === answered.questionId && <Text variant="body1">Вопрос {game.activeStep + 1}/{questions.length}: <b>{question?.text}</b></Text>}
-            </SimpleCell>
+            <div style={{ padding: 20 }}>
+                {question._id === answered.questionId && <Text variant="body2">Правильный ответ: <b>{question?.correct}</b></Text>}
+                {question._id === answered.questionId && <Text variant="body1">Вопрос {game.activeStep + 1}/{questions.length}: <b>{question?.text}</b></Text>}
+            </div>
             }
             <Div>
             {answered.user1 === user._id ? 
@@ -140,9 +147,10 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                     Отвечают оба игрока
                 </SimpleCell>}
             </Div>}
-            <SimpleCell subhead={`Вопрос ${game.activeStep + 1}/${questions.length}:`}>
-            {question.text}
-            </SimpleCell>
+            <div style={{ padding: 20 }}>
+                <Subhead>Вопрос {game.activeStep + 1}/{questions.length}:</Subhead>
+                <Text>{question.text}</Text>
+            </div>
             <Div>
                 <ButtonGroup mode="vertical" gap='space' stretched>
                 `   <Button
@@ -184,7 +192,7 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                 </ButtonGroup>
             </Div>
         </Card>}
-        </React.Fragment>
+        </React.Fragment>}</>
     );
 };
 

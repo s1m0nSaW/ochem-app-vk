@@ -5,15 +5,15 @@ import { Icon28Users3Outline, Icon28Notifications, Icon28FavoriteOutline,
     Icon28AdvertisingOutline, Icon28CheckCircleOff, Icon28CheckCircleOutline } from '@vkontakte/icons';
 import coins from '../img/item1.jpg'
 import React from "react";
-import axios from "axios";
 
-const TasksModal = ({ modalClose, token, setPlayer, vkid }) => {
+const TasksModal = ({ modalClose, vkid, socket }) => {
     const [ notifications, setNotifications] = React.useState(false);
     const [ favorite, setFavorite ] = React.useState(false);
     const [ recomended, setRecomended ] = React.useState(false);
     const [ joined, setJoined ] = React.useState(false);
 
     const recomend = () => {
+        console.log('recomend pushed')
         bridge.send('VKWebAppRecommend')
         .then((data) => { 
             if (data.result) {
@@ -73,12 +73,8 @@ const TasksModal = ({ modalClose, token, setPlayer, vkid }) => {
     }
 
     const setPromoter = async () => {
-        const data = { token: token, vkid: vkid, status: 'promoter', dailyRsvp: 3 }
-        await axios.patch('https://ochem.ru/api/rsvp-date', data)
-        .then((data)=>setPlayer(data.data))
-        .catch((err)=>{
-            console.warn(err); 
-        });
+        const data = { vkid: vkid, status: 'promoter', dailyRsvp: 3 }
+        socket.emit('promoter', data);
         modalClose();
     }
 
@@ -120,7 +116,7 @@ const TasksModal = ({ modalClose, token, setPlayer, vkid }) => {
                 icon={<Image borderRadius="l" src={coins} size={72} />}
                 header='Задания'
                 subheader='Выполни задания и каждый день получай 3 монеты бесплатно.'
-                actions={notifications && favorite && recomended && joined &&
+                actions={notifications && favorite && joined &&
                     <React.Fragment>
                         <Spacing size={16} />
                         <Button
@@ -164,7 +160,7 @@ const TasksModal = ({ modalClose, token, setPlayer, vkid }) => {
                 >
                     Добавь в избранное
                 </SimpleCell>
-                <SimpleCell
+                {recomended && <SimpleCell
                     expandable="auto"
                     before={<Icon28AdvertisingOutline />}
                     after={recomended === true ? <Icon28CheckCircleOutline/>:
@@ -173,7 +169,7 @@ const TasksModal = ({ modalClose, token, setPlayer, vkid }) => {
                     </IconButton>}
                 >
                     Рекомендуй приложение
-                </SimpleCell>
+                </SimpleCell>}
             </ModalCard>
         </ModalRoot>
     );
@@ -183,7 +179,6 @@ export default TasksModal;
 
 TasksModal.propTypes = {
     modalClose: PropTypes.func,
-    token: PropTypes.string,
-    setPlayer: PropTypes.func,
     vkid: PropTypes.number,
+    socket: PropTypes.object,
 };

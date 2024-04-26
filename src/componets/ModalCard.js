@@ -1,8 +1,7 @@
-import { Avatar, Button, ButtonGroup, Group, ModalCard, ModalPage, ModalPageHeader, ModalRoot, SimpleCell, Spacing, Title } from "@vkontakte/vkui";
+import { Avatar, Button, ButtonGroup, Group, Header, ModalCard, ModalPage, ModalPageHeader, ModalRoot, SimpleCell, Spacing, Title } from "@vkontakte/vkui";
 import React from "react";
 import PropTypes from 'prop-types';
 import bridge from "@vkontakte/vk-bridge";
-import axios from "axios";
 
 import { Icon56UserCircleOutline, Icon16CrownCircleFillVkDating } from '@vkontakte/icons'
 
@@ -10,7 +9,7 @@ const MODAL_CARD_NOTIFICATIONS = 'notifications';
 const MODAL_CARD_CHAT_INVITE = 'chat-invite';
 const MODAL_PAGE_WITH_FIXED_HEIGHT = 'fixed-height';
 
-const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, player, socket }) => {
+const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, friends }) => {
     const [activeModal, setActiveModal] = React.useState(MODAL_CARD_CHAT_INVITE);
     const [modalHistory, setModalHistory] = React.useState([]);
     const [friend, setFriend] = React.useState(null);
@@ -25,23 +24,14 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
                 if (data) {
                     // Данные о пользователях
                     setFriend(data.users[0]);
-                    const params = { vkid: data.users[0].id }
-                    await axios.post('https://ochem.ru/api/auth', params)
-                    .then((data)=>{
-                        setPlayer2(data.data)
-                        //console.log("user est ", data.data)
-                    }).catch(async (err)=>{
-                        console.log(err);
-                        const fields = {
-                            vkid: data.users[0].id,
-                            status: 'firstTime',
-                            firstName: data.users[0].first_name,
-                            avaUrl: data.users[0].photo_200,
-                        }
-                        await axios.post('https://ochem.ru/api/auth/register', fields)
-                        .then((data)=>setPlayer2(data.data.user))
-                        .catch((err)=>console.log(err));
-                    })
+                    const params = { 
+                        vkid: user.id,
+                        playerId: data.users[0].id,
+                        status: 'firstTime',
+                        firstName: data.users[0].first_name,
+                        avaUrl: data.users[0].photo_200,
+                    }
+                    socket.emit("newPlayer", params);
                 }
             })
             .catch((error) => {
@@ -49,6 +39,19 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
                 console.log(error);
             });
     };
+
+    const onClickFriend = (friend) => {
+        setFriend(friend);
+        const params = { 
+            vkid: user.id,
+            playerId: friend.id,
+            status: 'firstTime',
+            firstName: friend.first_name,
+            avaUrl: friend.photo_200,
+        }
+        socket.emit("newPlayer", params);
+        changeActiveModal(MODAL_PAGE_WITH_FIXED_HEIGHT)
+    }
 
     const confirmTheme = (_theme) => {
         if(_theme.forSponsor){
@@ -64,47 +67,22 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
         }
     }
 
-    const checkPlayer2 = async () => {
-        newGame(player2)
-    }
-
-    const newGame = async (_player) => {
+    const newGame = async () => {
         if(player.rsvp < 1){
             onOpenSnackBar('Не хватает монет чтобы создать игру', 'error')
         } else {
             let _turn = null
-            if(gameTheme.quiz === true) _turn = _player._id;
+            if(gameTheme.quiz === true) _turn = player2._id;
 
             const fields = {
-                gameName: `Игра ${user.first_name} & ${friend.first_name}`,
+                playerId1: user.id, 
+                playerId2: player2.vkid, 
+                turn: _turn, 
                 theme: gameTheme.theme,
-                quiz: gameTheme.quiz,
-                forSponsor: gameTheme.forSponsor,
-                user1: player._id,
-                user2: _player._id,
-                userUrl1: user.photo_200, 
-                userUrl2: friend.photo_200,
-                turn: _turn,
-                token: token,
             }
-            await axios.post('https://ochem.ru/api/new-game', fields).then((data)=>{
-                if(data){
-                    socket.emit("upGames", { userId: friend._id });
-                    const fields = {
-                        userId: friend._id,
-                        message:`${user.first_name} пригласил поиграть`, 
-                        severity: 'info',
-                    }
-                    socket.emit("socketNotification", fields);
-                    getPlayer();
-                    onOpenSnackBar('Игра создана', 'success')
-                    onCloseModals()
-                }
-            }).catch((err)=>{
-                console.warn(err); 
-                onOpenSnackBar('Не удалось создать игру', 'error')
-                onCloseModals()
-            });
+            socket.emit('newGame', fields);
+            socket.emit("upGames", { userId: friend.vkid });
+            onCloseModals()
         }
     }
 
@@ -145,23 +123,53 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
         changeActiveModal(modalHistory[modalHistory.length - 2]);
     };
 
-    React.useEffect(()=>{
-        const getThemes = async () => {
-            try {
-                const data = { token: token }
-                const _rates = await axios.post('https://ochem.ru/api/all-rates', data)
-                if(_rates) {
-                    setThemes(_rates.data)
+    const randomUserFriends = (
+        <React.Fragment>
+            <Group
+                header={
+                <Header mode="secondary" indicator={friends.length}>
+                    Друзья
+                </Header>
                 }
-            } catch (err) {
-                console.warn(err)
-            }
-        }
-        getThemes()
-    },[token])
+            >
+                {friends.map((user) => {
+                return (
+                    <SimpleCell before={<Avatar src={user.photo_100} />} key={user.id} onClick={()=>onClickFriend(user)}>
+                    {user.first_name}
+                    </SimpleCell>
+                );
+                })}
+            </Group>
+        </React.Fragment>
+    );
+
+    React.useEffect(()=>{
+        socket.on("ratings", ({ data }) => {
+            setThemes(data.ratings)
+        });
+    },[socket])
+
+    React.useEffect(()=>{
+        socket.on("friend", ({ data }) => {
+            setPlayer2(data.player)
+        });
+    },[socket, user])
 
     return (
         <ModalRoot activeModal={activeModal} onClose={modalBack}>
+            <ModalPage
+                id={MODAL_CARD_CHAT_INVITE}
+                onClose={() => changeActiveModal(null)}
+                settlingHeight={100}
+                height={'70%'}
+                header={
+                <ModalPageHeader>
+                    Выберите друга с которым будете играть
+                </ModalPageHeader>
+                }
+            >
+                {randomUserFriends}
+            </ModalPage>
             <ModalCard
                 id={MODAL_CARD_NOTIFICATIONS}
                 onClose={() => changeActiveModal(null)}
@@ -191,7 +199,7 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
                                 size="l"
                                 mode="primary"
                                 stretched
-                                onClick={checkPlayer2}
+                                onClick={newGame}
                             >
                                 Создать
                             </Button>
@@ -200,7 +208,7 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
                 }
             />
             <ModalCard
-                id={MODAL_CARD_CHAT_INVITE}
+                id={'deleted'}
                 onClose={() => changeActiveModal(null)}
                 icon={ friend ? 
                     <Avatar
@@ -247,7 +255,7 @@ const ModalCards = ({ onCloseModals, token, getPlayer, user, onOpenSnackBar, pla
                 height={'70%'}
                 header={
                 <ModalPageHeader>
-                    Выбрать тему игры
+                    Выберите тему игры
                 </ModalPageHeader>
                 }
             >
@@ -272,23 +280,9 @@ export default ModalCards;
 ModalCards.propTypes = {
     onCloseModals: PropTypes.func,
     token:PropTypes.string,
-    getPlayer: PropTypes.func,
     onOpenSnackBar: PropTypes.func,
-    player: PropTypes.shape({
-        _id: PropTypes.string,
-        status: PropTypes.string,
-        dailyRsvp: PropTypes.number,
-        rsvp: PropTypes.number,
-        rsvpStatus: PropTypes.bool,
-        rsvpDate: PropTypes.number,
-    }),
-    user: PropTypes.shape({
-        photo_200: PropTypes.string,
-        first_name: PropTypes.string,
-        last_name: PropTypes.string,
-        city: PropTypes.shape({
-            title: PropTypes.string,
-        }),
-    }),
+    player: PropTypes.object,
+    user: PropTypes.object,
     socket: PropTypes.object,
+    friends: PropTypes.array,
 };

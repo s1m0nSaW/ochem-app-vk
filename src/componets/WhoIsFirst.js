@@ -18,11 +18,11 @@ export const WhoIsFirst = ({ user, friend, game, setTurn }) => {
                 <Div>
                     <Group>
                         {user&&
-                            <Cell before={<Avatar src={user.avaUrl} />} onClick={()=>setTurn(user._id, 0)}>
+                            <Cell before={<Avatar src={user.avaUrl} />} onClick={()=>setTurn(user._id)}>
                                 {user.firstName}
                             </Cell>}
                         {friend&&
-                            <Cell before={<Avatar src={friend.avaUrl} />} onClick={()=>setTurn(friend._id, 0)}>
+                            <Cell before={<Avatar src={friend.avaUrl} />} onClick={()=>setTurn(friend._id)}>
                                 {friend.firstName}
                             </Cell>}
                     </Group>
