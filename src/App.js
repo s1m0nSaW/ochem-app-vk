@@ -30,8 +30,13 @@ export const App = () => {
     setModal(_modal);
   }
 
-  const onCloseSnack = () => {
-    setPopout(null);
+  const onResetSnack = (reset) => {
+    if(reset === 'close'){
+      setPopout(null);
+    } else (
+      setPopout(<ScreenSpinner size="large" />)
+    )
+    
   }
 
   const onChangePage = () => {
@@ -57,7 +62,7 @@ export const App = () => {
 
   useEffect(() => {
     const handleSuccessOpen = (message, severity) => {
-      setPopout(<Snack severity={severity} message={message} onExit={onCloseSnack}/>);
+      setPopout(<Snack severity={severity} message={message} onExit={()=>setPopout(null)}/>);
     };
 
     socket.on("notification", ({ data }) => {
@@ -97,10 +102,10 @@ export const App = () => {
       <SplitCol>
         <View activePanel={activePanel}>
           <Preload id="preload" user={fetchedUser} socket={socket}/>
-          <Intro id="intro" fetchedUser={fetchedUser} socket={socket} closeSnack={onCloseSnack}/>
-          <Home id="home" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} closeSnack={onCloseSnack} onChangePage={onChangePage}/>
-          <Games id="games" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} closeSnack={onCloseSnack}  onChangePage={onChangePage}/>
-          <Game id="game" fetchedUser={fetchedUser} socket={socket} setModal={changeModal}  onChangePage={onChangePage}/>
+          <Intro id="intro" fetchedUser={fetchedUser} socket={socket} onResetSnack={onResetSnack}/>
+          <Home id="home" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} onResetSnack={onResetSnack} onChangePage={onChangePage}/>
+          <Games id="games" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} onResetSnack={onResetSnack} onChangePage={onChangePage}/>
+          <Game id="game" fetchedUser={fetchedUser} socket={socket} setModal={changeModal} onChangePage={onChangePage}/>
           <Test id="test" />
         </View>
       </SplitCol>

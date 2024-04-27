@@ -16,7 +16,7 @@ import TasksModal from '../componets/TasksModal';
 //Сервисный ключ доступа c7e29d85c7e29d85c7e29d8581c4f5f9a3cc7e2c7e29d85a2396e9f88a7c3a00de34a3c
 //защищенный ключ U0hwJw6k2EgpXr9LuqyG
 
-export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePage }) => {
+export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChangePage }) => {
   const { photo_200, city, first_name, last_name } = { ...fetchedUser };
   const routeNavigator = useRouteNavigator();
   const [player, setPlayer] = useState(null);
@@ -53,6 +53,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePa
 
   const handleFreeRsvp = () => {
     if(player.rsvpStatus){
+      onResetSnack('open')
       const fields = { vkid: fetchedUser.id };
       socket.emit('getFreeRsvp', fields);
     } else {
@@ -64,7 +65,9 @@ export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePa
 
   const getPlayer = () => {
     const fields = { vkid: fetchedUser.id };
-    socket.emit('getUser', fields);
+    setTimeout(()=>{
+      socket.emit('getUser', fields);
+    },1000)
   }
 
   const myGames = () => {
@@ -97,6 +100,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePa
   }
 
   const getToken = () => {
+    onResetSnack('open')
     bridge.send('VKWebAppGetAuthToken', { 
       app_id: 51864614, 
       scope: 'friends'
@@ -118,6 +122,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePa
   const newGame = (friends) => {
     const fields = { vkid: fetchedUser.id };
     socket.emit('getThemes', fields);
+    onResetSnack('close')
     setModal(<ModalCards 
                 onCloseModals={()=>setModal(null)} 
                 name={first_name} 
@@ -191,10 +196,10 @@ export const Home = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePa
     socket.on("updatedUser", ({ data }) => {
       if(data.user !== player){
         setPlayer(data.user)
-        closeSnack();
+        onResetSnack('close');
       } 
     });
-  },[socket, closeSnack, player])
+  },[socket, onResetSnack, player])
 
   useEffect(()=>{
     socket.on("compliments", ({ data }) => {
@@ -261,6 +266,6 @@ Home.propTypes = {
   setModal: PropTypes.func,
   fetchedUser: PropTypes.object,
   socket: PropTypes.object,
-  closeSnack: PropTypes.func,
+  onResetSnack: PropTypes.func,
   onChangePage: PropTypes.func,
 };

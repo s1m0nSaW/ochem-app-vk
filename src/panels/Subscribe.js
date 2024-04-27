@@ -15,8 +15,9 @@ const SubscribeModal = ({ modalClose, getPlayer, onOpenSnackBar }) => {
             })
             .then( (data) => {
               console.log('Покупка прошла успешно', data);
-              getPlayer()
               onOpenSnackBar(`Покупка состоялась.`, 'success')
+              getPlayer()
+              modalClose()
             }) 
             .catch( (e) => {
               console.log('Ошибка!', e);

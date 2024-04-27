@@ -8,7 +8,7 @@ import photo2 from "../img/photo2.png";
 import photo3 from "../img/photo3.png";
 import photo4 from "../img/photo4.png";
 
-export const Intro = ({ id, fetchedUser, socket, closeSnack }) => {
+export const Intro = ({ id, fetchedUser, socket, onResetSnack }) => {
     const routeNavigator = useRouteNavigator();
     const [step, setStep] = React.useState(1);
     const [player, setPlayer] = React.useState(null);
@@ -48,9 +48,9 @@ export const Intro = ({ id, fetchedUser, socket, closeSnack }) => {
     React.useEffect(()=>{
         socket.on("updatedUser", ({ data }) => {
             setPlayer(data.user)
-            closeSnack()
+            onResetSnack('close')
         });
-    },[socket, closeSnack])
+    },[socket, onResetSnack])
 
     return (
         <Panel id={id}>
@@ -111,5 +111,5 @@ Intro.propTypes = {
     id: PropTypes.string.isRequired,
     fetchedUser: PropTypes.object,
     socket: PropTypes.object,
-    closeSnack: PropTypes.func,
+    onResetSnack: PropTypes.func,
 };

@@ -195,7 +195,7 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
                 {game?.turn === null ? 
                     <WhoIsFirst user={user} friend={friend} setTurn={setTurn} game={game}/>
                     :
-                    <>{rateGame === false ? 
+                    <>{rateGame === false ?
                     <ActiveStep
                         question={questions && questions[game.activeStep]}
                         answered={answered && answered} 

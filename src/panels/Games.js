@@ -7,7 +7,7 @@ import AllGames from "../componets/AllGames.js";
 import GamesList from "../componets/GamesList.js";
 import Snack from "../componets/Snack.js";
 
-export const Games = ({ id, fetchedUser, setModal, socket, closeSnack, onChangePage }) => {
+export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChangePage }) => {
     const [snackbar, setSnackbar] = useState(false);
     const [severity, setSeverity] = useState('info');
     const [message, setMessage] = useState('');
@@ -122,10 +122,10 @@ export const Games = ({ id, fetchedUser, setModal, socket, closeSnack, onChangeP
         socket.on("myGames", ({ data }) => {
             if(data.games !== games){
                 setGames(data);
-                closeSnack()
+                onResetSnack('close')
             }
         });
-    },[socket, games, closeSnack])
+    },[socket, games, onResetSnack])
 
     useEffect(()=>{
         socket.on("updatedUser", ({ data }) => {
@@ -248,6 +248,6 @@ Games.propTypes = {
     setModal: PropTypes.func,
     socket: PropTypes.object,
     fetchedUser: PropTypes.object,
-    closeSnack: PropTypes.func,
+    onResetSnack: PropTypes.func,
     onChangePage: PropTypes.func,
 };

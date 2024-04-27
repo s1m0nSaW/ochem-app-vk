@@ -32,7 +32,7 @@ export const WhoIsFirst = ({ user, friend, game, setTurn }) => {
                     <Title  level="1">
                     Выбор игрока
                     </Title>
-                    <Title  level="1">
+                    <Title  level="3">
                     Пригласившему игроку нужно сделать выбор кто будет отвечать первый
                     </Title>
                 </Card>}
