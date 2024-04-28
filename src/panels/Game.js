@@ -66,18 +66,18 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
     const updateAnswered = async ( userId, answer, correct ) => {
         if (correct === 'none' || correct === '' || !correct){
             if (userId === answered.user1){
-                const fields = { answer1: answer, answer2: 'none', correct: 'none', gameId: game._id, id: answered.questionId }
+                const fields = { answer1: answer, answer2: 'none', correct: 'none', gameId: game._id, id: answered._id }
                 socket.emit("upAnswered", fields)
             } else if (userId === answered.user2){
-                const fields = { answer2: answer, answer1: 'none', correct: 'none', gameId: game._id, id: answered.questionId }
+                const fields = { answer2: answer, answer1: 'none', correct: 'none', gameId: game._id, id: answered._id }
                 socket.emit("upAnswered", fields)
             }
         } else {
             if (userId === answered.user1){
-                const fields = { answer1: answer, answer2: 'none', correct: correct, gameId: game._id, id: answered.questionId }
+                const fields = { answer1: answer, answer2: 'none', correct: correct, gameId: game._id, id: answered._id }
                 socket.emit("upAnswered", fields)
             } else {
-                const fields = { answer2: answer, answer1: 'none', correct: correct, gameId: game._id, id: answered.questionId }
+                const fields = { answer2: answer, answer1: 'none', correct: correct, gameId: game._id, id: answered._id }
                 socket.emit("upAnswered", fields)
             }
         }
@@ -162,13 +162,13 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
 
     React.useEffect(() => {
         socket.on("answered", (data) => {
-            if(answered !== data)setAnswered(data.data)
+            if(answered !== data.data)setAnswered(data.data)
         });
     },[socket, answered]);
 
     React.useEffect(() => {
         socket.on("questions", (data) => {
-            if(questions !== data) setQuestions(data.data)
+            if(questions !== data.data) setQuestions(data.data)
         });
     },[socket, questions]);
 
