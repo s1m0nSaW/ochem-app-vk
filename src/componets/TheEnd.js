@@ -42,9 +42,7 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
     }
 
     const removeGame = async () => {
-        if (window.confirm('Удалить все данные игры, включая переписку?')) {
-            socket.emit("removeGame", { vkid: user.vkid, gameId: game._id });
-        }
+        socket.emit("removeGame", { vkid: user.vkid, gameId: game._id });
     }
 
     const makeCompByFriend = () => {
@@ -64,7 +62,7 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
 
         const data = {
             userId: friend.vkid,
-            message: `${user.nickname} оценил игру в ${value} звезд`, 
+            message: `${user.firstName} оценил игру в ${value} звезд`, 
             severity: 'success',
         }
         socket.emit("socketNotification", data);
@@ -119,11 +117,14 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
                 {rating.games.includes(game._id) ?
                     <Placeholder
                         header="Спасибо"
+                        action={canMake && <Button size="m" mode="tertiary" onClick={makeCompByFriend}>
+                                    Подарить комплимент пользователю {friend?.firstName}
+                                </Button>}
                     >
                         Вы уже поставили оценку
                     </Placeholder>
                 :<>
-                    {game.user1 !== user._id ?
+                    {game.user1 === user._id ?
                         <Div style={{ alignItems:'center', justifyContent:'center', padding:'20px', display:'flex', textAlign:'center', flexDirection: 'column'}}>
                             <Text weight="1">Оцените игру вместе с {friend.firstName}</Text>
                             <ButtonGroup mode='vertical' align="center" gap='space'>

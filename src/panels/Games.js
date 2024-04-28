@@ -25,14 +25,18 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const onClickBack = () => {
-        onChangePage()
+        if(player?.status !== "sponsor"){
+            onChangePage()
+        }
         const fields = { vkid: fetchedUser.id };
         socket.emit('getUser', fields);
         routeNavigator.go('/home')
     }
 
     const onClickAll = () => {
-        onChangePage()
+        if(player?.status !== "sponsor"){
+            onChangePage()
+        }
         setGames(null)
         const fields = { vkid: fetchedUser.id };
         socket.emit('getAllGames', fields);
@@ -40,7 +44,9 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const onClickMy = () => {
-        onChangePage()
+        if(player?.status !== "sponsor"){
+            onChangePage()
+        }
         setGames(null)
         const fields = { vkid: fetchedUser.id };
         socket.emit('games', fields);
@@ -48,7 +54,9 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const onClickIn = () => {
-        onChangePage()
+        if(player?.status !== "sponsor"){
+            onChangePage()
+        }
         setGames(null)
         const fields = { vkid: fetchedUser.id };
         socket.emit('gamesIn', fields);
@@ -56,7 +64,9 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const onClickOut = () => {
-        onChangePage()
+        if(player?.status !== "sponsor"){
+            onChangePage()
+        }
         setGames(null)
         const fields = { vkid: fetchedUser.id };
         socket.emit('gamesOut', fields);

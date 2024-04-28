@@ -15,9 +15,7 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
     }
 
     const deleteGame = async (game) => {
-        if (window.confirm('Вы действительно хотите удалить игру?')) {
-            removeGame(game);
-        }
+        removeGame(game);
     }
 
     return (

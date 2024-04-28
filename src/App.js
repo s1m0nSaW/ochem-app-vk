@@ -41,7 +41,7 @@ export const App = () => {
 
   const onChangePage = () => {
     setCount(count + 1)
-    if(count > 5){
+    if(count > 7){
       setCount(0);
       if(availableAds === true){
         setPopout(<ScreenSpinner size="large" />)
@@ -105,7 +105,7 @@ export const App = () => {
           <Intro id="intro" fetchedUser={fetchedUser} socket={socket} onResetSnack={onResetSnack}/>
           <Home id="home" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} onResetSnack={onResetSnack} onChangePage={onChangePage}/>
           <Games id="games" fetchedUser={fetchedUser} setModal={changeModal} socket={socket} onResetSnack={onResetSnack} onChangePage={onChangePage}/>
-          <Game id="game" fetchedUser={fetchedUser} socket={socket} setModal={changeModal} onChangePage={onChangePage}/>
+          <Game id="game" fetchedUser={fetchedUser} socket={socket} setModal={changeModal}/>
           <Test id="test" />
         </View>
       </SplitCol>

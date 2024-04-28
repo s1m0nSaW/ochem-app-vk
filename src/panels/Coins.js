@@ -18,6 +18,7 @@ const Coins = ({ getPlayer, player, modalClose, onOpenSnackBar, socket }) => {
                 console.log("Покупка состоялась.", data);
                 getPlayer();
                 onOpenSnackBar(`Покупка состоялась.`, 'success')
+                modalClose()
             })
             .catch((e) => {
                 console.log("Ошибка!", e);
@@ -36,6 +37,7 @@ const Coins = ({ getPlayer, player, modalClose, onOpenSnackBar, socket }) => {
                     const data = { vkid: player.vkid }
                     socket.emit('afterAds', data);
                     onOpenSnackBar(`Реклама показана. Вы получите одну монету.`, 'success');
+                    modalClose()
                 // Ошибка
                 } else onOpenSnackBar(`Реклама не показана.`, 'error');
             })

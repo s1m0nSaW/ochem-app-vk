@@ -1,4 +1,4 @@
-import { Avatar, Button, ButtonGroup, Group, Header, ModalCard, ModalPage, ModalPageHeader, ModalRoot, SimpleCell, Spacing, Title } from "@vkontakte/vkui";
+import { Avatar, Button, ButtonGroup, Group, Header, ModalCard, ModalPage, ModalPageHeader, ModalRoot, Search, SimpleCell, Spacing, Title } from "@vkontakte/vkui";
 import React from "react";
 import PropTypes from 'prop-types';
 import bridge from "@vkontakte/vk-bridge";
@@ -16,28 +16,10 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     const [themes, setThemes] = React.useState([]);
     const [gameTheme, setGameTheme] = React.useState(null);
     const [player2, setPlayer2] = React.useState(null);
+    const [search, setSearch] = React.useState('');
 
-    const getFriend = async () => {
-        bridge
-            .send("VKWebAppGetFriends")
-            .then(async (data) => {
-                if (data) {
-                    // Данные о пользователях
-                    setFriend(data.users[0]);
-                    const params = { 
-                        vkid: user.id,
-                        playerId: data.users[0].id,
-                        status: 'firstTime',
-                        firstName: data.users[0].first_name,
-                        avaUrl: data.users[0].photo_200,
-                    }
-                    socket.emit("newPlayer", params);
-                }
-            })
-            .catch((error) => {
-                // Ошибка
-                console.log(error);
-            });
+    const onChange = (e) => {
+        setSearch(e.target.value);
     };
 
     const onClickFriend = (friend) => {
@@ -123,6 +105,10 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
         changeActiveModal(modalHistory[modalHistory.length - 2]);
     };
 
+    const usersFiltered = friends.filter(
+        ({ first_name }) => first_name.toLowerCase().indexOf(search.toLowerCase()) > -1,
+    );
+
     const randomUserFriends = (
         <React.Fragment>
             <Group
@@ -132,10 +118,10 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                 </Header>
                 }
             >
-                {friends.map((user) => {
+                {usersFiltered.map((user) => {
                 return (
                     <SimpleCell before={<Avatar src={user.photo_100} />} key={user.id} onClick={()=>onClickFriend(user)}>
-                    {user.first_name}
+                    {user.first_name} {user.last_name}
                     </SimpleCell>
                 );
                 })}
@@ -164,10 +150,14 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                 height={'70%'}
                 header={
                 <ModalPageHeader>
-                    Выберите друга с которым будете играть
+                    Выберите друга
                 </ModalPageHeader>
                 }
             >
+                <Search
+                    value={search}
+                    onChange={onChange}
+                />
                 {randomUserFriends}
             </ModalPage>
             <ModalCard
@@ -207,47 +197,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                     </React.Fragment>
                 }
             />
-            <ModalCard
-                id={'deleted'}
-                onClose={() => changeActiveModal(null)}
-                icon={ friend ? 
-                    <Avatar
-                        src={friend.photo_200}
-                        size={72}
-                    />:
-                    <Icon56UserCircleOutline />
-                }
-                header="Выберите друга"
-                subheader={friend ? `Играть с ${friend.first_name} ${friend.last_name}`:"Приглашение в игру"}
-                actions={
-                    <React.Fragment>
-                        <Spacing size={8} />
-                        <ButtonGroup size="l" mode="vertical" stretched>
-                            <Button
-                                key="join"
-                                size="l"
-                                mode="primary"
-                                stretched
-                                onClick={getFriend}
-                            >
-                                Выбрать друга
-                            </Button>
-                            <Button
-                                disabled={!friend}
-                                key="copy"
-                                size="l"
-                                mode="secondary"
-                                stretched
-                                onClick={() => changeActiveModal(MODAL_PAGE_WITH_FIXED_HEIGHT)}
-                            >
-                                Далее
-                            </Button>
-                        </ButtonGroup>
-                    </React.Fragment>
-                }
-            >
-                <Spacing size={20} />
-            </ModalCard>
             <ModalPage
                 id={MODAL_PAGE_WITH_FIXED_HEIGHT}
                 onClose={modalBack}

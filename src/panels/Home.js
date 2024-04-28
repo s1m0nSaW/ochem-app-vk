@@ -67,12 +67,15 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
     const fields = { vkid: fetchedUser.id };
     setTimeout(()=>{
       socket.emit('getUser', fields);
-    },1000)
+    },2000)
   }
 
   const myGames = () => {
-    onChangePage()
+    if(player.status !== "sponsor"){
+      onChangePage()
+    }
     const fields = { vkid: fetchedUser.id };
+    socket.emit('getUser', fields);
     socket.emit('getGames', fields);
     socket.emit('games', fields);
     routeNavigator.go('/games')
@@ -89,7 +92,9 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
       .then((data) => { 
         if (data.response) {
           // Метод API выполнен
-          onChangePage()
+          if(player.status !== "sponsor"){
+            onChangePage()
+          }
           newGame(data.response.items)
         } 
       })
@@ -203,9 +208,11 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
 
   useEffect(()=>{
     socket.on("compliments", ({ data }) => {
-      setComps(data.compliments)
+      if(data.compliments !== comps){
+        setComps(data.compliments)
+      }
     });
-  },[socket])
+  },[socket, comps])
 
   return (
       <Panel id={id}>
