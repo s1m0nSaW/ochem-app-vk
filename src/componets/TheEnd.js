@@ -51,6 +51,7 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
     }
 
     const RateGame = async () => {
+        setCanMake(false)
         makeCompliment();
         const fields = {
             ratingId: rating._id,
@@ -95,7 +96,7 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
                         subtitle={`Оценок: ${rating.count}`}
                         after={<CellButton mode='danger' after={<Icon20DeleteOutline/>} onClick={removeGame}></CellButton>}
                     >
-                    Вы играли в игру {rating.theme}
+                    Вы играли в игру:<br/>{rating.theme}
                     </SimpleCell>
                 </Div>
                 <Div>

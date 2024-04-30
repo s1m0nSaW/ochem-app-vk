@@ -66,7 +66,9 @@ export const App = () => {
     };
 
     socket.on("notification", ({ data }) => {
-      handleSuccessOpen(data.message, data.severity);
+      setTimeout(()=>{
+        handleSuccessOpen(data.message, data.severity);
+      },1000)
     });
   },[]);
 

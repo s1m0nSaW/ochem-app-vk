@@ -1,4 +1,4 @@
-import { Panel, PanelHeader, Button, Group, Avatar, RichCell, ButtonGroup, CellButton, PanelSpinner } from '@vkontakte/vkui';
+import { Panel, PanelHeader, Button, Group, Avatar, RichCell, ButtonGroup, CellButton, PanelSpinner, Badge } from '@vkontakte/vkui';
 import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 import bridge from '@vkontakte/vk-bridge';
 import PropTypes from 'prop-types';
@@ -24,6 +24,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
   const [severity, setSeverity] = useState('info');
   const [message, setMessage] = useState('');
   const [comps, setComps] = useState([]);
+  const [gamesInCount, setGamesInCount] = useState(0);
 
   const onCloseSnack = () => {
     setMessage('');
@@ -75,8 +76,8 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
       onChangePage()
     }
     const fields = { vkid: fetchedUser.id };
-    socket.emit('getUser', fields);
     socket.emit('getGames', fields);
+    socket.emit('getUser', fields);
     socket.emit('games', fields);
     routeNavigator.go('/games')
   }
@@ -163,7 +164,6 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
           bridge.send('VKWebAppGetLaunchParams')
           .then((data) => { 
               if (data) {
-                console.log('Параметры запуска получены',data);
                 // Параметры запуска получены
                 if(data.vk_are_notifications_enabled === 1) tasks +=1
                 if(data.vk_is_favorite === 1) tasks +=1
@@ -202,9 +202,11 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
       if(data.user !== player){
         setPlayer(data.user)
         onResetSnack('close');
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('getGames', fields);
       } 
     });
-  },[socket, onResetSnack, player])
+  },[socket, onResetSnack, player, fetchedUser])
 
   useEffect(()=>{
     socket.on("compliments", ({ data }) => {
@@ -213,6 +215,12 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
       }
     });
   },[socket, comps])
+
+  useEffect(() => {
+    socket.on("incoming", ({ data }) => {
+      setGamesInCount(data)
+    });
+},[socket]);
 
   return (
       <Panel id={id}>
@@ -252,7 +260,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
             <CellButton onClick={getToken} before={<Icon28AddCircleFillBlue />}>
             Новая игра
             </CellButton>
-            <CellButton onClick={myGames} before={<Icon28GameCircleFillBlue />}>
+            <CellButton onClick={myGames} badgeAfterTitle={gamesInCount !== 0 && <Badge>Есть новые</Badge>} before={<Icon28GameCircleFillBlue />}>
             Мои игры
             </CellButton>
             {player?.status === 'none' && <CellButton onClick={openTasks} before={<Icon28GiftCircleFillRed />}>

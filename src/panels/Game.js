@@ -96,12 +96,6 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
             date: +new Date(),
         };
         socket.emit("sendMessage", fields);
-        const data = {
-            userId: friend.vkid,
-            message: `Сообщение от ${user.firstName}`, 
-            severity: 'info'
-        }
-        socket.emit("socketNotification", data);
         setValue('')
     };
 
