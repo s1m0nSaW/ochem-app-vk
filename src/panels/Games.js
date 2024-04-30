@@ -88,6 +88,15 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
         socket.emit('setGame', fields);
     }
 
+    const timeout = setTimeout(()=>{
+        if(player === null && fetchedUser){
+            const fields = { vkid: fetchedUser.id };
+            socket.emit('getUser', fields);
+            socket.emit('getGames', fields);
+            socket.emit('games', fields);
+        }
+    },2000)
+
     useEffect(()=>{
         socket.on("onRemoveGame", ({ data }) => {
             if(data){
@@ -118,11 +127,11 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                 socket.emit('getGames', fields);
                 if(selected === "in") {
                     socket.emit('gamesIn', fields);
-                    setSelected("in")
+                    setSelected("my")
                 }
                 if(selected === "out") {
                     socket.emit('gamesOut', fields);
-                    setSelected("out")
+                    setSelected("my")
                 }
             } 
         });
@@ -133,17 +142,19 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
             if(data.games !== games){
                 setGames(data);
                 onResetSnack('close')
+                clearTimeout(timeout)
             }
         });
-    },[socket, games, onResetSnack])
+    },[socket, games, onResetSnack, timeout])
 
     useEffect(()=>{
         socket.on("updatedUser", ({ data }) => {
             if(data.user !== player){
                 setPlayer(data.user)
+                clearTimeout(timeout)
             } 
         });
-    },[socket, player])
+    },[socket, player, timeout])
 
     useEffect(() => {
         socket.on("incoming", ({ data }) => {

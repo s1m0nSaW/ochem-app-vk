@@ -45,12 +45,21 @@ export const Intro = ({ id, fetchedUser, socket, onResetSnack }) => {
         }
     };
 
+    const timeout = setTimeout(()=>{
+        if(player === null && fetchedUser){
+            const fields = { vkid: fetchedUser.id };
+            socket.emit('getUser', fields);
+            routeNavigator.go('/')
+        }
+    },2000)
+
     React.useEffect(()=>{
         socket.on("updatedUser", ({ data }) => {
             setPlayer(data.user)
+            clearTimeout(timeout)
             onResetSnack('close')
         });
-    },[socket, onResetSnack])
+    },[socket, onResetSnack, timeout])
 
     return (
         <Panel id={id}>

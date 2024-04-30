@@ -156,6 +156,13 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
     setModal(<Coins modalClose={()=>setModal(null)} getPlayer={getPlayer} player={player} onOpenSnackBar={onOpenSnackBar}/>)
   }
 
+  const timeout = setTimeout(()=>{
+    if(player === null && fetchedUser){
+        const fields = { vkid: fetchedUser.id };
+        socket.emit('getUser', fields);
+    }
+  },2000)
+
   useEffect(()=>{
     const checkPromoter = async () => {
       let tasks = 0
@@ -200,13 +207,14 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
   useEffect(()=>{
     socket.on("updatedUser", ({ data }) => {
       if(data.user !== player){
+        clearTimeout(timeout)
         setPlayer(data.user)
         onResetSnack('close');
         const fields = { vkid: fetchedUser.id };
         socket.emit('getGames', fields);
       } 
     });
-  },[socket, onResetSnack, player, fetchedUser])
+  },[socket, onResetSnack, player, fetchedUser, timeout])
 
   useEffect(()=>{
     socket.on("compliments", ({ data }) => {
@@ -220,7 +228,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
     socket.on("incoming", ({ data }) => {
       setGamesInCount(data)
     });
-},[socket]);
+  },[socket]);
 
   return (
       <Panel id={id}>
@@ -255,7 +263,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
                   </RichCell>
               </Group>
               
-          {comps.length !== 0 && <Compliments comps={comps.reverse()}/>}
+          {comps.length !== 0 && <Compliments comps={comps}/>}
           <Group>
             <CellButton onClick={getToken} before={<Icon28AddCircleFillBlue />}>
             Новая игра
