@@ -3,7 +3,7 @@ import Compliments from "./Compliments";
 import PropTypes from "prop-types";
 import { Avatar, ModalCard, ModalRoot } from "@vkontakte/vkui";
 
-const UserInfoModal = ({ friend, socket, modalClose }) => {
+const UserInfoModal = ({ friend, socket, modalClose, isOnline }) => {
     const [compliments, setCompliments] = React.useState(null);
 
     React.useEffect(() => {
@@ -17,7 +17,9 @@ const UserInfoModal = ({ friend, socket, modalClose }) => {
             <ModalCard
                 id="UserInfoModal"
                 onClose={modalClose}
-                icon={<Avatar size={96} src={friend.avaUrl} />}
+                icon={<Avatar size={96} src={friend.avaUrl}>
+                    {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                </Avatar>}
                 header={friend.firstName}
             >
                 {compliments && <Compliments comps={compliments.reverse()}/>}
@@ -32,4 +34,5 @@ UserInfoModal.propTypes = {
     friend: PropTypes.object,
     socket: PropTypes.object,
     modalClose: PropTypes.func,
+    isOnline: PropTypes.func,
 };

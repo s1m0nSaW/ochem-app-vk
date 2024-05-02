@@ -17,6 +17,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     const [gameTheme, setGameTheme] = React.useState(null);
     const [player2, setPlayer2] = React.useState(null);
     const [search, setSearch] = React.useState('');
+    const [onlines, setOnlines] = React.useState(null);
 
     const onChange = (e) => {
         setSearch(e.target.value);
@@ -105,6 +106,12 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
         changeActiveModal(modalHistory[modalHistory.length - 2]);
     };
 
+    function isOnline(userId) {
+        if(onlines){
+            return Object.values(onlines).includes(userId);
+        } else return false
+    }
+
     const usersFiltered = friends.filter(
         ({ first_name }) => first_name.toLowerCase().indexOf(search.toLowerCase()) > -1,
     );
@@ -120,7 +127,11 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
             >
                 {usersFiltered.map((user) => {
                 return (
-                    <SimpleCell before={<Avatar src={user.photo_100} />} key={user.id} onClick={()=>onClickFriend(user)}>
+                    <SimpleCell 
+                    before={<Avatar src={user.photo_100}>{isOnline(user.id) && <Avatar.BadgeWithPreset preset="online" />}</Avatar>} 
+                    key={user.id} 
+                    onClick={()=>onClickFriend(user)}
+                    >
                     {user.first_name} {user.last_name}
                     </SimpleCell>
                 );
@@ -140,6 +151,12 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
             setPlayer2(data.player)
         });
     },[socket, user])
+
+    React.useEffect(()=>{
+        socket.on("onlines", ({ data }) => {
+            setOnlines(data);
+        });
+    },[socket])
 
     return (
         <ModalRoot activeModal={activeModal} onClose={modalBack}>

@@ -2,8 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Avatar, Button, ButtonGroup, Card, Div, Group, SimpleCell, Subhead, Text } from "@vkontakte/vkui";
 
-const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo }) => {
+const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo, socket }) => {
     const [ variant, setVariant ] = React.useState(0);
+    const [onlines, setOnlines] = React.useState(null);
 
     const handleClick = (i) => {
         if(variant === 0){
@@ -19,6 +20,18 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
         setVariant(0);
         next()
     }
+
+    function isOnline(userId) {
+        if(onlines){
+            return Object.values(onlines).includes(userId);
+        } else return false
+    }
+
+    React.useEffect(()=>{
+        socket.on("onlines", ({ data }) => {
+            setOnlines(data);
+        });
+    },[socket])
 
     React.useEffect(()=>{
         if (answered){
@@ -86,7 +99,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                         {user.firstName}
                     </SimpleCell>
                     <SimpleCell
-                        before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}/>}
+                        before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                            {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                        </Avatar>}
                         subtitle={`Ответ: ${answered?.answer2}`}
                     >
                         {friend.firstName}
@@ -94,7 +109,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                 </Group>:
                 <Group>
                     <SimpleCell
-                        before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()} />}
+                        before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                            {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                        </Avatar>}
                         subtitle={`Ответ: ${answered?.answer1}`}
                     >
                         {friend.firstName}
@@ -122,13 +139,17 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
             <Div>
                 {question.correct === 'none' || question.correct === '' || !question.correct ?
                 <SimpleCell
-                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}/>}
+                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                        {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                    </Avatar>}
                     subtitle="Вы отвечаете"
                 >
                     {friend.firstName} отгадывает
                 </SimpleCell>:
                 <SimpleCell
-                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}/>}
+                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                        {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                    </Avatar>}
                 >
                     Отвечают оба игрока
                 </SimpleCell>}
@@ -136,13 +157,17 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
             <Div>
                 {question.correct === 'none' || question.correct === '' || !question.correct ?
                 <SimpleCell
-                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}/>}
+                        before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                            {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                        </Avatar>}
                     subtitle="Вы отгадываете"
                 >
                     {friend.firstName} отвечает
                 </SimpleCell>:
                 <SimpleCell
-                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}/>}
+                    before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
+                        {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                    </Avatar>}
                 >
                     Отвечают оба игрока
                 </SimpleCell>}
@@ -209,179 +234,5 @@ ActiveStep.propTypes = {
     next: PropTypes.func, 
     rateTheGame: PropTypes.func, 
     friendInfo: PropTypes.func,
+    socket: PropTypes.object,
 };
-
-
-/*
-return (<>
-        {answered.answer1 !== 'none' && answered.answer2 !== 'none' ? 
-        <Grid item>
-            {answered.correct === 'none' ? 
-            <>
-            {game.turn === user._id ?
-                <>
-                {answered.answer1 === answered.answer2 ?
-                    <CardHeader
-                    title={<Typography variant="body1"><b>{friend.nickname} отгадал</b></Typography>}
-                    subheader={<Typography variant="body2">Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Typography>}
-                />:
-                <CardHeader
-                    title={<Typography variant="body1"><b>{friend.nickname} не отгадал</b></Typography>}
-                    subheader={<Typography variant="body2">Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Typography>}
-                />
-                }
-                </>:<>
-                {answered.answer1 === answered.answer2 ?
-                    <CardHeader
-                    title={<Typography variant="body1"><b>Вы отгадали</b></Typography>}
-                    subheader={<Typography variant="body2">Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Typography>}
-                />:
-                <CardHeader
-                    title={<Typography variant="body1"><b>Вы не отгадали</b></Typography>}
-                    subheader={<Typography variant="body2">Вопрос {game.activeStep + 1}/{questions.length}: {question?.text}</Typography>}
-                />
-                }
-                </>
-            }
-            </>
-            :
-            <CardHeader
-                title={question._id === answered.questionId && <Typography variant="body1">Вопрос {game.activeStep + 1}/{questions.length}: <b>{question?.text}</b></Typography>}
-                subheader={question._id === answered.questionId && <Typography variant="body2">Правильный ответ: <b>{question?.correct}</b></Typography>}
-            />
-            }
-            <CardContent>
-            {answered.user1 === user._id ? 
-                <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
-                    <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                        {user && <UserAvatar user={user} onClickAva={()=>friendInfo(user)}/>}
-                        </ListItemAvatar>
-                        <ListItemText
-                        primary={user?.nickname}
-                        secondary={`Ответ: ${answered?.answer1}`}
-                        />
-                    </ListItem>
-                    <Divider variant="inset" component="li" />
-                    <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                        {friend && <UserAvatar user={friend} onClickAva={()=>friendInfo(friend)}/>}
-                        </ListItemAvatar>
-                        <ListItemText
-                        primary={friend?.nickname}
-                        secondary={`Ответ: ${answered?.answer2}`}
-                        />
-                    </ListItem>
-                </List>:
-                <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}>
-                    <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                        {friend && <UserAvatar user={friend} onClickAva={()=>friendInfo(friend)}/>}
-                        </ListItemAvatar>
-                        <ListItemText
-                        primary={friend?.nickname}
-                        secondary={`Ответ: ${answered?.answer1}`}
-                        />
-                    </ListItem>
-                    <Divider variant="inset" component="li" />
-                    <ListItem alignItems="flex-start">
-                        <ListItemAvatar>
-                        {user && <UserAvatar user={user} onClickAva={()=>friendInfo(user)}/>}
-                        </ListItemAvatar>
-                        <ListItemText
-                        primary={user?.nickname}
-                        secondary={`Ответ: ${answered?.answer2}`}
-                        />
-                    </ListItem>
-                </List>}
-            </CardContent>
-            {game.activeStep + 1 === questions.length ?
-                <Stack justifyContent='center' alignItems='center' sx={{ marginBottom:'20px'}}>
-                <Button variant="contained" onClick={rateTheGame}>Результаты</Button>
-                </Stack>
-                :
-                <Stack justifyContent='center' alignItems='center' sx={{ marginBottom:'20px'}}>
-            {game.user1 === user._id && 
-                <Button variant="contained" onClick={nextStep}>Следующий вопрос</Button>}
-            </Stack>}
-        </Grid> :
-        <Grid item>
-            {user && friend && <>{game.turn === user._id ? 
-            <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center">
-            <UserAvatar user={user} onClickAva={()=>friendInfo(user)}/>
-            <Stack direction='column' spacing={0}>
-                {question.correct === 'none' || question.correct === '' || !question.correct ? 
-                <Typography variant="body1"><b>Вы отвечаете</b> <br/></Typography>:
-                <Typography variant="body1">Отвечают оба игрока</Typography>}
-                {question.correct === 'none' || question.correct === '' || !question.correct ? 
-                <Typography variant="body2">{friend.nickname} отгадывает</Typography>: null }
-            </Stack>
-            <UserAvatar user={friend} onClickAva={()=>friendInfo(friend)}/>
-            </Stack>:
-            <Stack
-            direction="row"
-            justifyContent="space-between"
-            alignItems="center">
-            <UserAvatar user={friend} onClickAva={()=>friendInfo(friend)}/>
-            <Stack direction='column' spacing={0}>
-                {question.correct === 'none' || question.correct === '' || !question.correct ? 
-                <Typography variant="body2">{friend.nickname} отвечает <br/></Typography>:
-                <Typography variant="body2">Отвечают оба игрока</Typography>}
-                {question.correct === 'none' || question.correct === '' || !question.correct ? 
-                <Typography variant="body1"><b>Вы отгадываете</b></Typography> : null}
-            </Stack>
-            <UserAvatar user={user} onClickAva={()=>friendInfo(user)}/>
-            </Stack>
-            }</>}
-            <CardContent>
-                <Typography variant="body2">Вопрос {game.activeStep + 1}/{questions.length}:<br/>
-                <b>{question.text}</b></Typography>
-            </CardContent>
-            <CardContent>
-                <Stack
-                    direction="column"
-                    justifyContent="center"
-                    alignItems="stretch"
-                    spacing={1}
-                >
-                    <Button
-                    size="small"
-                    disabled={variant!==0 && variant!==1} 
-                    onClick={()=>handleClick(1)}
-                    variant={variant===1 ? "contained":'outlined'} 
-                    color={variant===1 ? "success":'primary'}>
-                    {question.answer1}
-                    </Button>
-                    <Button
-                    size="small"
-                    disabled={variant!==0 && variant!==2} 
-                    onClick={()=>handleClick(2)}
-                    variant={variant===2 ? "contained":'outlined'} 
-                    color={variant===2 ? "success":'primary'}>
-                    {question.answer2}
-                    </Button>
-                    {question.answer3 && <Button
-                    size="small"
-                    disabled={variant!==0 && variant!==3} 
-                    onClick={()=>handleClick(3)}
-                    variant={variant===3 ? "contained":'outlined'} 
-                    color={variant===3 ? "success":'primary'}>
-                    {question.answer3}
-                    </Button>}
-                    {question.answer4 && <Button
-                    size="small"
-                    disabled={variant!==0 && variant!==4} 
-                    onClick={()=>handleClick(4)}
-                    variant={variant===4 ? "contained":'outlined'} 
-                    color={variant===4 ? "success":'primary'}>
-                    {question.answer4}
-                    </Button>}
-                </Stack> 
-            </CardContent>
-        </Grid>}
-        </>
-    );
-    */

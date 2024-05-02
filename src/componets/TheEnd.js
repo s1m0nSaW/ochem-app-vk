@@ -4,7 +4,7 @@ import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import { Avatar, Button, ButtonGroup, Caption, Card, CellButton, Div, FormItem, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
 import { Icon20Favorite, Icon20DeleteOutline } from '@vkontakte/icons';
 
-const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
+const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
     const routeNavigator = useRouteNavigator();
     const [ connecting, setConnecting ] = React.useState(false);
     const [ answereds, setAnswereds ] = React.useState();
@@ -102,7 +102,9 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment }) => {
                 <Div>
                     {friend &&
                         <SimpleCell
-                        before={<Avatar size={40} src={friend.avaUrl} />}
+                        before={<Avatar size={40} src={friend.avaUrl}>
+                            {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                        </Avatar>}
                         subtitle={`Отгадано: ${countCorrectAnswers(friend._id)}`}
                     >
                         {friend.firstName}
@@ -175,4 +177,5 @@ TheEnd.propTypes = {
     game: PropTypes.object,
     socket: PropTypes.object,
     makeCompliment: PropTypes.func,
+    isOnline: PropTypes.func,
 };

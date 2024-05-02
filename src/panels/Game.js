@@ -25,6 +25,7 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
     const [ rateGame, setRateGame ] = React.useState(false);
     const [bottomPadding, setBottomPadding] = React.useState(0);
     const [ value, setValue ] = React.useState('');
+    const [onlines, setOnlines] = React.useState(null);
 
     const nextQuestion = () => {
         console.log('turn:', game.turn)
@@ -48,6 +49,12 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
         socket.emit('setTurn', fields);
     }
 
+    function isOnline(userId) {
+        if(onlines){
+            return Object.values(onlines).includes(userId);
+        } else return false
+    }
+
     const modalClose = () => { setModal(null)}
 
     const makeCompliment = () => {
@@ -60,7 +67,7 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
             friendId: friend._id
         }
         socket.emit('getUserCompliment', fields);
-        setModal(<UserInfoModal friend={friend} socket={socket} modalClose={modalClose}/>)
+        setModal(<UserInfoModal friend={friend} socket={socket} modalClose={modalClose} isOnline={isOnline}/>)
     }
 
     const updateAnswered = async ( userId, answer, correct ) => {
@@ -97,6 +104,12 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
         };
         socket.emit("sendMessage", fields);
         setValue('')
+        const data = { 
+            vkid: user.vkid,
+            gameId: game._id,
+            status: false,
+        };
+        socket.emit('typing', data);
     };
 
     const updateBottomPadding = () => {
@@ -114,6 +127,26 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
         socket.emit('getGames', fields);
         socket.emit('games', fields);
         routeNavigator.go('/games')
+    }
+
+    const onChangeText = (e) => {
+        let newValue = e.target.value
+        setValue(newValue)
+        if (newValue.length > 0) {
+            const fields = { 
+                vkid: user.vkid,
+                gameId: game._id,
+                status: true,
+            };
+            socket.emit('typing', fields);
+        } else {
+            const fields = { 
+                vkid: user.vkid,
+                gameId: game._id,
+                status: false,
+            };
+            socket.emit('typing', fields);
+        }
     }
 
     const timeout = setTimeout(()=>{
@@ -179,6 +212,12 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
         });
     },[socket]);
 
+    React.useEffect(()=>{
+        socket.on("onlines", ({ data }) => {
+            setOnlines(data);
+        });
+    },[socket])
+
     return (
         <Panel id={id}>
             <PanelHeader before={<PanelHeaderBack onClick={onClickBack} />}>
@@ -201,23 +240,24 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
                         rateTheGame={rateTheGame}
                         questions={questions}
                         friendInfo={userInfo}
+                        socket={socket}
                     />:
-                    <TheEnd user={user} friend={friend} game={game} socket={socket} makeCompliment={makeCompliment}/>}
+                    <TheEnd user={user} friend={friend} game={game} socket={socket} makeCompliment={makeCompliment} isOnline={isOnline}/>}
                 </>}
             </Div>}
             <Div>
-                <Chat messages={messages} user={user}/>
+                <Chat messages={messages} user={user} socket={socket} id={fetchedUser.id}/>
             </Div>
             <div style={{ height: bottomPadding }} />
             <FixedLayout vertical="bottom" filled>
             <div ref={fixedLayoutInnerElRef}>
                 <Separator wide />
                 <WriteBar
-                after={value.length > 0 && <WriteBarIcon onClick={sendMessage} mode="send" />}
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                onHeightChange={() => updateBottomPadding()}
-                placeholder="Сообщение"
+                    after={value.length > 0 && <WriteBarIcon onClick={sendMessage} mode="send" />}
+                    value={value}
+                    onChange={onChangeText}
+                    onHeightChange={() => updateBottomPadding()}
+                    placeholder="Сообщение"
                 />
             </div>
             </FixedLayout>
