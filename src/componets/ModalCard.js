@@ -193,15 +193,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                         <Spacing size={16} />
                         <ButtonGroup size="s" stretched mode="vertical">
                             <Button
-                                key="deny"
-                                size="l"
-                                mode="secondary"
-                                stretched
-                                onClick={test}
-                            >
-                                Отправить приложение
-                            </Button>
-                            <Button
                                 key="allow"
                                 size="l"
                                 mode="primary"
@@ -209,6 +200,15 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                                 onClick={newGame}
                             >
                                 Создать
+                            </Button>
+                            <Button
+                                key="deny"
+                                size="l"
+                                mode="secondary"
+                                stretched
+                                onClick={test}
+                            >
+                                Отправить приложение
                             </Button>
                         </ButtonGroup>
                     </React.Fragment>

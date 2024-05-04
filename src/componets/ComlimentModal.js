@@ -173,6 +173,7 @@ const ComlimentModal = ({ player, friend, socket, modalClose }) => {
                 id={COMPLIMENTS}
                 onClose={modalClose}
                 header="Подарите комплимент"
+                subheader="Оставьте приятное впечатление о себе — платные комплименты от 35 рублей (5 голосов)."
             >
                 <Group>
                     <HorizontalScroll>

@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from 'prop-types';
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
-import { Avatar, Button, ButtonGroup, Caption, Card, CellButton, Div, FormItem, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
-import { Icon20Favorite, Icon20DeleteOutline } from '@vkontakte/icons';
+import { Avatar, Button, ButtonGroup, Caption, Card, Div, FormItem, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
+import { Icon20Favorite } from '@vkontakte/icons';
 
 const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
     const routeNavigator = useRouteNavigator();
@@ -39,10 +39,6 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
         } catch (error) {
             console.log(error)
         }
-    }
-
-    const removeGame = async () => {
-        socket.emit("removeGame", { vkid: user.vkid, gameId: game._id });
     }
 
     const makeCompByFriend = () => {
@@ -94,7 +90,6 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
                     <SimpleCell 
                         subhead={`Рейтинг игры: ${rating.rating}/5`} 
                         subtitle={`Оценок: ${rating.count}`}
-                        after={<CellButton mode='danger' after={<Icon20DeleteOutline/>} onClick={removeGame}></CellButton>}
                     >
                     Вы играли в игру:<br/>{rating.theme}
                     </SimpleCell>

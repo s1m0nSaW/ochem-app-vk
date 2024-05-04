@@ -1,4 +1,4 @@
-import { Counter, Group, HorizontalScroll, Panel, PanelHeader, PanelHeaderBack, Tabs, TabsItem } from "@vkontakte/vkui";
+import { Alert, Counter, Group, HorizontalScroll, Panel, PanelHeader, PanelHeaderBack, Tabs, TabsItem } from "@vkontakte/vkui";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
@@ -74,8 +74,30 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const removeGame = (gameId) => {
-        const fields = { vkid: fetchedUser.id, gameId: gameId };
-        socket.emit('removeGame', fields);
+        setModal(
+            <Alert
+                actions={[
+                    {
+                    title: 'Отмена',
+                    mode: 'cancel',
+                    },
+                    {
+                    title: 'Удалить',
+                    mode: 'destructive',
+                    action: () =>{
+                        const fields = { vkid: fetchedUser.id, gameId: gameId };
+                        socket.emit('removeGame', fields);
+                    },
+                    },
+                ]}
+                actionsLayout="horizontal"
+                dismissButtonMode="inside"
+                onClose={()=>setModal(null)}
+                header="Удаление игры"
+                text="Вы уверены, что хотите удалить все данные игры для всех пользователей, включая сообщения?"
+            />
+        );
+        
     }
 
     const acceptGame = async (gameId) => {
