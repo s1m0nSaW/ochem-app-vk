@@ -65,7 +65,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
             }
             socket.emit('newGame', fields);
             socket.emit("upGames", { userId: friend.vkid });
-            onCloseModals()
         }
     }
 

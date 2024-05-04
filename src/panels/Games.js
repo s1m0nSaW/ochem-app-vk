@@ -103,6 +103,9 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     const acceptGame = async (gameId) => {
         const fields = { gameId: gameId };
         socket.emit('acceptGame', fields);
+        const data = { vkid: fetchedUser.id };
+        socket.emit('getGames', data);
+        setSelected("my")
     }
     
     const setGame = async (gameId) => {
@@ -136,24 +139,6 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                 if(selected === "out") {
                     socket.emit('gamesOut', fields);
                     setSelected("out")
-                }
-            } 
-        });
-    },[socket, selected, fetchedUser])
-
-    useEffect(()=>{
-        socket.on("gameAccepted", ({ data }) => {
-            if(data){
-                setGames(null)
-                const fields = { vkid: fetchedUser.id };
-                socket.emit('getGames', fields);
-                if(selected === "in") {
-                    socket.emit('gamesIn', fields);
-                    setSelected("my")
-                }
-                if(selected === "out") {
-                    socket.emit('gamesOut', fields);
-                    setSelected("my")
                 }
             } 
         });
