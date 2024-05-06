@@ -101,11 +101,32 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const acceptGame = async (gameId) => {
-        const fields = { gameId: gameId };
-        socket.emit('acceptGame', fields);
-        const data = { vkid: fetchedUser.id };
-        socket.emit('getGames', data);
-        setSelected("my")
+        setModal(
+            <Alert
+                actions={[
+                    {
+                    title: 'Отмена',
+                    mode: 'cancel',
+                    },
+                    {
+                    title: 'Принять',
+                    mode: 'destructive',
+                    action: () =>{
+                        const fields = { gameId: gameId };
+                        socket.emit('acceptGame', fields);
+                        const data = { vkid: fetchedUser.id };
+                        socket.emit('getGames', data);
+                        setSelected("my")
+                    },
+                    },
+                ]}
+                actionsLayout="horizontal"
+                dismissButtonMode="inside"
+                onClose={()=>setModal(null)}
+                header="Принять игру"
+                text="Вы согласны играть?"
+            />
+        );
     }
     
     const setGame = async (gameId) => {
@@ -114,11 +135,25 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
 
     const timeout = setTimeout(()=>{
-        if(player === null && fetchedUser){
-            const fields = { vkid: fetchedUser.id };
-            socket.emit('getUser', fields);
-            socket.emit('getGames', fields);
-            socket.emit('games', fields);
+        if(games === null){
+            if(fetchedUser){
+                const fields = { vkid: fetchedUser.id };
+                console.log('games===null', games)
+                socket.emit('getUser', fields);
+                socket.emit('getGames', fields);
+                if(selected === "my") {
+                    socket.emit('games', fields);
+                    setSelected("my")
+                }
+                if(selected === "in") {
+                    socket.emit('gamesIn', fields);
+                    setSelected("in")
+                }
+                if(selected === "out") {
+                    socket.emit('gamesOut', fields);
+                    setSelected("out")
+                }
+            }
         }
     },2000)
 
@@ -146,19 +181,19 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
 
     useEffect(()=>{
         socket.on("myGames", ({ data }) => {
+            clearTimeout(timeout)
             if(data.games !== games){
                 setGames(data);
                 onResetSnack('close')
-                clearTimeout(timeout)
             }
         });
     },[socket, games, onResetSnack, timeout])
 
     useEffect(()=>{
         socket.on("updatedUser", ({ data }) => {
+            clearTimeout(timeout)
             if(data.user !== player){
                 setPlayer(data.user)
-                clearTimeout(timeout)
             } 
         });
     },[socket, player, timeout])

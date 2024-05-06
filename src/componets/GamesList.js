@@ -46,6 +46,13 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
                                     <Icon28Done onClick={()=>acceptGame(game._id)}/>}
                                 </>
                         }
+                        onClick={()=> {
+                            if (page === 'in') {
+                                acceptGame(game._id);
+                            } else if (page === 'my') {
+                                selectGame(game._id);
+                            }
+                        }}
                     >
                         {game.gameName}
                     </SimpleCell>
