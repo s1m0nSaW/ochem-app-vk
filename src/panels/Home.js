@@ -266,7 +266,7 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
           {comps.length !== 0 && <Compliments comps={comps}/>}
           <Group>
             <CellButton onClick={getToken} before={<Icon28AddCircleFillBlue />}>
-            Новая игра
+            Новая игра с другом
             </CellButton>
             <CellButton onClick={myGames} badgeAfterTitle={gamesInCount !== 0 && <Badge>Есть новые</Badge>} before={<Icon28GameCircleFillBlue />}>
             Мои игры

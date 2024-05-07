@@ -2,21 +2,8 @@ import React from "react";
 import { List, PanelSpinner, Placeholder, SimpleCell, Text } from "@vkontakte/vkui";
 import { Icon16CrownCircleFillVkDating, Icon28PlayCircleFillAzure, Icon28Done, Icon28Delete, Icon56BlockOutline } from '@vkontakte/icons';
 import PropTypes from 'prop-types';
-import { useRouteNavigator } from '@vkontakte/vk-mini-apps-router';
 
 const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
-    const routeNavigator = useRouteNavigator();
-
-    const selectGame = (gameId) => {
-        if(page === 'my'){
-            setGame(gameId)
-            routeNavigator.go('/game')
-        }
-    }
-
-    const deleteGame = async (game) => {
-        removeGame(game);
-    }
 
     return (
         <>
@@ -32,25 +19,23 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
                             verticalAlign: 'text-top',
                         }}/>}</Text>}
                         after={
-                            <>
-                                {page === 'my' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
-                                {page === 'in' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
-                                {page === 'out' && <Icon28Delete onClick={()=>deleteGame(game._id)}/>}
-                            </>
+                            <Icon28Delete/>
                         }
                         before={
                             <>
                                 {page === 'my' &&
-                                    <Icon28PlayCircleFillAzure  onClick={()=>selectGame(game._id)}/>}
+                                    <Icon28PlayCircleFillAzure/>}
                                 {page === 'in' &&
-                                    <Icon28Done onClick={()=>acceptGame(game._id)}/>}
+                                    <Icon28Done/>}
                                 </>
                         }
                         onClick={()=> {
                             if (page === 'in') {
                                 acceptGame(game._id);
                             } else if (page === 'my') {
-                                selectGame(game._id);
+                                setGame(game._id);
+                            } else if (page === 'out') {
+                                removeGame(game._id);
                             }
                         }}
                     >

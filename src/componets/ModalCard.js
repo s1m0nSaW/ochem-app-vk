@@ -166,7 +166,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                 height={'70%'}
                 header={
                 <ModalPageHeader>
-                    Выберите друга
+                    Игра для друзей
                 </ModalPageHeader>
                 }
             >

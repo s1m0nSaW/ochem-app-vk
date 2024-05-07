@@ -87,14 +87,14 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                     action: () =>{
                         const fields = { vkid: fetchedUser.id, gameId: gameId };
                         socket.emit('removeGame', fields);
-                    },
+                        },
                     },
                 ]}
                 actionsLayout="horizontal"
                 dismissButtonMode="inside"
                 onClose={()=>setModal(null)}
                 header="Удаление игры"
-                text="Вы уверены, что хотите удалить все данные игры для всех пользователей, включая сообщения?"
+                text="Вы уверены, что хотите удалить все данные игры для всех пользователей?"
             />
         );
         
@@ -105,19 +105,24 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
             <Alert
                 actions={[
                     {
-                    title: 'Отмена',
-                    mode: 'cancel',
-                    },
-                    {
-                    title: 'Принять',
+                    title: 'Принять заявку',
                     mode: 'destructive',
                     action: () =>{
-                        const fields = { gameId: gameId };
-                        socket.emit('acceptGame', fields);
-                        const data = { vkid: fetchedUser.id };
-                        socket.emit('getGames', data);
-                        setSelected("my")
+                            const fields = { gameId: gameId };
+                            socket.emit('acceptGame', fields);
+                            const data = { vkid: fetchedUser.id };
+                            socket.emit('getGames', data);
+                            setSelected("my")
+                        },
                     },
+                    {
+                    title: 'Удалить заявку',
+                    mode: 'destructive',
+                    action: () => removeGame(gameId),
+                    },
+                    {
+                    title: 'Отмена',
+                    mode: 'cancel',
                     },
                 ]}
                 actionsLayout="horizontal"
@@ -130,8 +135,34 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     }
     
     const setGame = async (gameId) => {
-        const fields = { vkid: fetchedUser.id, gameId: gameId };
-        socket.emit('setGame', fields);
+        setModal(
+            <Alert
+                actions={[
+                    {
+                    title: 'Играть',
+                    mode: 'destructive',
+                    action: () =>{
+                            const fields = { vkid: fetchedUser.id, gameId: gameId };
+                            socket.emit('setGame', fields);
+                            routeNavigator.go('/game')
+                        },
+                    },
+                    {
+                    title: 'Удалить',
+                    mode: 'destructive',
+                    action: () => removeGame(gameId),
+                    },
+                    {
+                    title: 'Отмена',
+                    mode: 'cancel',
+                    },
+                ]}
+                actionsLayout="horizontal"
+                dismissButtonMode="inside"
+                onClose={()=>setModal(null)}
+                header="Играть"
+            />
+        );
     }
 
     const timeout = setTimeout(()=>{

@@ -4,7 +4,8 @@ import { Avatar, Button, ButtonGroup, Card, Div, Group, SimpleCell, Subhead, Tex
 
 const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo, socket }) => {
     const [ variant, setVariant ] = React.useState(0);
-    const [onlines, setOnlines] = React.useState(null);
+    const [ onlines, setOnlines ] = React.useState(null);
+    const [ friendAnswer, setFriendAnswer ] = React.useState(false);
 
     const handleClick = (i) => {
         if(variant === 0){
@@ -40,16 +41,19 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                 if(answered.answer1 === question.answer2) setVariant(2)
                 if(answered.answer1 === question.answer3) setVariant(3)
                 if(answered.answer1 === question.answer4) setVariant(4)
+                if(answered.answer2 !== 'none') setFriendAnswer(true)
             } else if (user._id === answered.user2){
                 if(answered.answer2 === question.answer1) setVariant(1)
                 if(answered.answer2 === question.answer2) setVariant(2)
                 if(answered.answer2 === question.answer3) setVariant(3)
                 if(answered.answer2 === question.answer4) setVariant(4)
+                if(answered.answer1 !== 'none') setFriendAnswer(true)
             } 
             if(answered.answer1 === 'none' && answered.answer2 === 'none') setVariant(0)
         }
 
     },[answered, question, user])
+
     return (<>
         {answered && <React.Fragment>
         {answered.answer1 !== 'none' && answered.answer2 !== 'none' ?
@@ -144,7 +148,7 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                     </Avatar>}
                     subtitle="Вы отвечаете"
                 >
-                    {friend.firstName} отгадывает
+                    {friend.firstName} отгадывает<br/>
                 </SimpleCell>:
                 <SimpleCell
                     before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
@@ -177,6 +181,7 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                 <Text>{question.text}</Text>
             </div>
             <Div>
+                {friendAnswer && <div style={{ padding: 20 }}><Subhead><i>{friend.firstName} сделал(-а) выбор</i></Subhead></div>}
                 <ButtonGroup mode="vertical" gap='space' stretched>
                 `   <Button
                     size="s"
