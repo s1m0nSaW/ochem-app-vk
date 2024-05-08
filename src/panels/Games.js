@@ -1,4 +1,4 @@
-import { Alert, Counter, Group, HorizontalScroll, Panel, PanelHeader, PanelHeaderBack, Tabs, TabsItem } from "@vkontakte/vkui";
+import { Group, HorizontalScroll, Panel, PanelHeader, PanelHeaderBack, Tabs, TabsItem } from "@vkontakte/vkui";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
@@ -13,10 +13,9 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
     const [message, setMessage] = useState('');
     const [selected, setSelected] = useState('my');
     const routeNavigator = useRouteNavigator();
-    const [incomingRequestsCount, setIncomingRequestsCount] = useState(0);
-    const [outgoingRequestsCount, setOutgoingRequestsCount] = useState(0);
     const [player, setPlayer] = useState(null);
     const [games, setGames] = useState(null);
+    const [ onlines, setOnlines ] = useState(null);
 
     const onCloseSnack = () => {
         setMessage('');
@@ -53,136 +52,27 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
         setSelected("my")
     }
 
-    const onClickIn = () => {
-        if(player?.status !== "sponsor"){
-            onChangePage()
-        }
-        setGames(null)
-        const fields = { vkid: fetchedUser.id };
-        socket.emit('gamesIn', fields);
-        setSelected("in")
-    }
-
-    const onClickOut = () => {
-        if(player?.status !== "sponsor"){
-            onChangePage()
-        }
-        setGames(null)
-        const fields = { vkid: fetchedUser.id };
-        socket.emit('gamesOut', fields);
-        setSelected("out")
-    }
-
-    const removeGame = (gameId) => {
-        setModal(
-            <Alert
-                actions={[
-                    {
-                    title: 'Отмена',
-                    mode: 'cancel',
-                    },
-                    {
-                    title: 'Удалить',
-                    mode: 'destructive',
-                    action: () =>{
-                        const fields = { vkid: fetchedUser.id, gameId: gameId };
-                        socket.emit('removeGame', fields);
-                        },
-                    },
-                ]}
-                actionsLayout="horizontal"
-                dismissButtonMode="inside"
-                onClose={()=>setModal(null)}
-                header="Удаление игры"
-                text="Вы уверены, что хотите удалить все данные игры для всех пользователей?"
-            />
-        );
-        
-    }
-
-    const acceptGame = async (gameId) => {
-        setModal(
-            <Alert
-                actions={[
-                    {
-                    title: 'Принять заявку',
-                    mode: 'destructive',
-                    action: () =>{
-                            const fields = { gameId: gameId };
-                            socket.emit('acceptGame', fields);
-                            const data = { vkid: fetchedUser.id };
-                            socket.emit('getGames', data);
-                            setSelected("my")
-                        },
-                    },
-                    {
-                    title: 'Удалить заявку',
-                    mode: 'destructive',
-                    action: () => removeGame(gameId),
-                    },
-                    {
-                    title: 'Отмена',
-                    mode: 'cancel',
-                    },
-                ]}
-                actionsLayout="horizontal"
-                dismissButtonMode="inside"
-                onClose={()=>setModal(null)}
-                header="Принять игру"
-                text="Вы согласны играть?"
-            />
-        );
+    function isOnline(userId) {
+        if(onlines){
+            return Object.values(onlines).includes(userId);
+        } else return false
     }
     
     const setGame = async (gameId) => {
-        setModal(
-            <Alert
-                actions={[
-                    {
-                    title: 'Играть',
-                    mode: 'destructive',
-                    action: () =>{
-                            const fields = { vkid: fetchedUser.id, gameId: gameId };
-                            socket.emit('setGame', fields);
-                            routeNavigator.go('/game')
-                        },
-                    },
-                    {
-                    title: 'Удалить',
-                    mode: 'destructive',
-                    action: () => removeGame(gameId),
-                    },
-                    {
-                    title: 'Отмена',
-                    mode: 'cancel',
-                    },
-                ]}
-                actionsLayout="horizontal"
-                dismissButtonMode="inside"
-                onClose={()=>setModal(null)}
-                header="Играть"
-            />
-        );
+        const fields = { vkid: fetchedUser.id, gameId: gameId };
+        socket.emit('setGame', fields);
+        routeNavigator.go('/game')
     }
 
     const timeout = setTimeout(()=>{
         if(games === null){
             if(fetchedUser){
                 const fields = { vkid: fetchedUser.id };
-                console.log('games===null', games)
                 socket.emit('getUser', fields);
                 socket.emit('getGames', fields);
                 if(selected === "my") {
                     socket.emit('games', fields);
                     setSelected("my")
-                }
-                if(selected === "in") {
-                    socket.emit('gamesIn', fields);
-                    setSelected("in")
-                }
-                if(selected === "out") {
-                    socket.emit('gamesOut', fields);
-                    setSelected("out")
                 }
             }
         }
@@ -197,14 +87,6 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                 if(selected === "my") {
                     socket.emit('games', fields);
                     setSelected("my")
-                }
-                if(selected === "in") {
-                    socket.emit('gamesIn', fields);
-                    setSelected("in")
-                }
-                if(selected === "out") {
-                    socket.emit('gamesOut', fields);
-                    setSelected("out")
                 }
             } 
         });
@@ -229,14 +111,11 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
         });
     },[socket, player, timeout])
 
-    useEffect(() => {
-        socket.on("incoming", ({ data }) => {
-            setIncomingRequestsCount(data)
+    useEffect(()=>{
+        socket.on("onlines", ({ data }) => {
+            setOnlines(data);
         });
-        socket.on("outgoing", ({ data }) => {
-            setOutgoingRequestsCount(data)
-        });
-    },[socket]);
+    },[socket])
 
     return (
         <Panel id={id}>
@@ -269,28 +148,6 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                         >
                             Мои игры
                         </TabsItem>
-                        <TabsItem
-                            id="in"
-                            selected={selected === "in"}
-                            onClick={onClickIn}
-                            aria-controls="tab-in"
-                            after={incomingRequestsCount !== 0 && <Counter size="s" mode="prominent">
-                            {incomingRequestsCount}
-                            </Counter>}
-                        >
-                            Входящие
-                        </TabsItem>
-                        <TabsItem
-                            id="out"
-                            selected={selected === "out"}
-                            onClick={onClickOut}
-                            aria-controls="tab-out"
-                            after={outgoingRequestsCount !== 0 && <Counter size="s" mode="prominent">
-                            {outgoingRequestsCount}
-                            </Counter>}
-                        >
-                            Отправленные
-                        </TabsItem>
                     </HorizontalScroll>
                 </Tabs>
             </Group>
@@ -300,29 +157,10 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                 )}
                 {selected === "my" && (
                     <GamesList
-                        page={"my"}
                         games={games}
-                        acceptGame={acceptGame}
-                        removeGame={removeGame}
                         setGame={setGame}
-                    />
-                )}
-                {selected === "in" && (
-                    <GamesList
-                        page={"in"}
-                        games={games}
-                        acceptGame={acceptGame}
-                        removeGame={removeGame}
-                        setGame={setGame}
-                    />
-                )}
-                {selected === "out" && (
-                    <GamesList
-                        page={"out"}
-                        games={games}
-                        acceptGame={acceptGame}
-                        removeGame={removeGame}
-                        setGame={setGame}
+                        userId={player._id}
+                        isOnline={isOnline}
                     />
                 )}
             </Group>

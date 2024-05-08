@@ -1,4 +1,4 @@
-import { Div, FixedLayout, Panel, PanelHeader, PanelHeaderBack, PanelSpinner, Separator, WriteBar, WriteBarIcon, } from "@vkontakte/vkui";
+import { Alert, Div, FixedLayout, IconButton, Panel, PanelHeader, PanelHeaderBack, PanelSpinner, Separator, WriteBar, WriteBarIcon, } from "@vkontakte/vkui";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import React from "react";
@@ -9,6 +9,7 @@ import TheEnd from "../componets/TheEnd.js";
 import Chat from "../componets/Chat.js";
 import ComlimentModal from "../componets/ComlimentModal.js";
 import UserInfoModal from "../componets/UserInfoModal.js";
+import { Icon24DeleteOutlineAndroid } from "@vkontakte/icons";
 
 export const Game = ({ id, fetchedUser, socket, setModal }) => {
     const fixedLayoutInnerElRef = React.useRef();
@@ -154,9 +155,37 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
             const fields = { vkid: fetchedUser.id };
             socket.emit('getGames', fields);
             socket.emit('games', fields);
-            routeNavigator.go('/games')
+            routeNavigator.go('/games');
         }
     },2000)
+
+    const removeGame = () => {
+        setModal(
+            <Alert
+                actions={[
+                    {
+                    title: 'Отмена',
+                    mode: 'cancel',
+                    },
+                    {
+                    title: 'Удалить',
+                    mode: 'destructive',
+                    action: () =>{
+                        const fields = { vkid: fetchedUser.id, gameId: game._id };
+                        socket.emit('removeGame', fields);
+                        socket.emit('games', fields);
+                        routeNavigator.go('/games');
+                        },
+                    },
+                ]}
+                actionsLayout="horizontal"
+                dismissButtonMode="inside"
+                onClose={()=>setModal(null)}
+                header="Удаление игры"
+                text="Вы уверены, что хотите удалить все данные игры для всех пользователей?"
+            />
+        );
+    }
 
     React.useEffect(() => {
         if(game && user){
@@ -172,12 +201,14 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
     },[socket]);
 
     React.useEffect(() => {
-        socket.on("deleteGame", ({ data }) => {
+        socket.on("onRemoveGame", ({ data }) => {
             if(data){
-                routeNavigator.go('/home') 
+                const fields = { vkid: fetchedUser.id };
+                socket.emit('games', fields);
+                routeNavigator.go('/games');
             }
         });
-    },[socket, routeNavigator]);
+    },[socket, routeNavigator, fetchedUser]);
 
     React.useEffect(() => {
         socket.on("updatedGame", ({ data }) => {
@@ -220,7 +251,12 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
 
     return (
         <Panel id={id}>
-            <PanelHeader before={<PanelHeaderBack onClick={onClickBack} />}>
+            <PanelHeader 
+            before={<PanelHeaderBack onClick={onClickBack} />} 
+            after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                <Icon24DeleteOutlineAndroid color="red" />
+            </IconButton>}
+            >
             {game?.gameName}
             </PanelHeader>
             {connecting === false ? <PanelSpinner style={{height:'80vh'}}>Данные загружаются, пожалуйста, подождите...</PanelSpinner>:

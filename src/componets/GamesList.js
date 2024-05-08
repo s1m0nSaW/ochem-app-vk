@@ -1,9 +1,9 @@
 import React from "react";
-import { List, PanelSpinner, Placeholder, SimpleCell, Text } from "@vkontakte/vkui";
-import { Icon16CrownCircleFillVkDating, Icon28PlayCircleFillAzure, Icon28Done, Icon28Delete, Icon56BlockOutline } from '@vkontakte/icons';
+import { Avatar, List, PanelSpinner, Placeholder, SimpleCell, Text } from "@vkontakte/vkui";
+import { Icon16CrownCircleFillVkDating, Icon28Delete, Icon56BlockOutline } from '@vkontakte/icons';
 import PropTypes from 'prop-types';
 
-const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
+const GamesList = ({ games, setGame, userId, isOnline }) => {
 
     return (
         <>
@@ -21,23 +21,15 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
                         after={
                             <Icon28Delete/>
                         }
-                        before={
-                            <>
-                                {page === 'my' &&
-                                    <Icon28PlayCircleFillAzure/>}
-                                {page === 'in' &&
-                                    <Icon28Done/>}
-                                </>
+                        before={ userId === game.user1 ? 
+                            <Avatar size={40} src={game.userUrl2}>
+                                {isOnline(game.user2vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                            </Avatar>
+                            :<Avatar size={40} src={game.userUrl1}>
+                                {isOnline(game.user1vkid) && <Avatar.BadgeWithPreset preset="online" />}
+                            </Avatar>
                         }
-                        onClick={()=> {
-                            if (page === 'in') {
-                                acceptGame(game._id);
-                            } else if (page === 'my') {
-                                setGame(game._id);
-                            } else if (page === 'out') {
-                                removeGame(game._id);
-                            }
-                        }}
+                        onClick={()=> {setGame(game._id)}}
                     >
                         {game.gameName}
                     </SimpleCell>
@@ -45,11 +37,7 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
             </List>:
             <Placeholder 
                 icon={<Icon56BlockOutline />}
-                header={<>
-                    {page === 'my' && 'У Вас ещё нет игр'}
-                    {page === 'in' && 'У Вас нет входящих заявок на игры'}
-                    {page === 'out' && 'У Вас нет отправленных заявок на игры'}
-                </>}
+                header={'У Вас ещё нет игр'}
             >
                 Вы можете создать новую игру на главной странице профиля
             </Placeholder>}
@@ -61,9 +49,8 @@ const GamesList = ({ page, games, acceptGame, removeGame, setGame }) => {
 export default GamesList;
 
 GamesList.propTypes = {
-    page:PropTypes.string,
     games: PropTypes.array,
-    acceptGame: PropTypes.func,
-    removeGame: PropTypes.func,
     setGame: PropTypes.func,
+    userId: PropTypes.string,
+    isOnline: PropTypes.func,
 };

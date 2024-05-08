@@ -2,26 +2,57 @@ import { Avatar, Button, ButtonGroup, Group, Header, ModalCard, ModalPage, Modal
 import React from "react";
 import PropTypes from 'prop-types';
 import bridge from "@vkontakte/vk-bridge";
+import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 
 import { Icon56UserCircleOutline, Icon16CrownCircleFillVkDating } from '@vkontakte/icons'
 
-const MODAL_CARD_NOTIFICATIONS = 'notifications';
-const MODAL_CARD_CHAT_INVITE = 'chat-invite';
-const MODAL_PAGE_WITH_FIXED_HEIGHT = 'fixed-height';
+const FRIENDS = 'friends';
+const THEMES = 'themes';
+const SHARE = 'share';
 
 const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, friends }) => {
-    const [activeModal, setActiveModal] = React.useState(MODAL_CARD_CHAT_INVITE);
+    const [activeModal, setActiveModal] = React.useState(FRIENDS);
     const [modalHistory, setModalHistory] = React.useState([]);
     const [friend, setFriend] = React.useState(null);
     const [themes, setThemes] = React.useState([]);
-    const [gameTheme, setGameTheme] = React.useState(null);
     const [player2, setPlayer2] = React.useState(null);
     const [search, setSearch] = React.useState('');
     const [onlines, setOnlines] = React.useState(null);
+    const [friendIsRegistred, setFriendIsRegistred] = React.useState(false);
+    const [gameId, setGameId] = React.useState(null);
+    const routeNavigator = useRouteNavigator();
 
     const onChange = (e) => {
         setSearch(e.target.value);
     };
+
+    const play = () => {
+        if(gameId !== null){
+            const fields = { vkid: user.id, gameId: gameId };
+            socket.emit('setGame', fields);
+            routeNavigator.go('/game')
+            onCloseModals()
+        }
+    }
+
+    const newGame = async (gameTheme) => {
+        if(player.rsvp < 1){
+            onOpenSnackBar('Не хватает монет чтобы создать игру', 'error')
+        } else {
+            const fields = {
+                playerId1: user.id, 
+                playerId2: player2.vkid,
+                theme: gameTheme.theme,
+            }
+            socket.emit('newGame', fields);
+            socket.emit("upGames", { userId: friend.vkid });
+            if(friendIsRegistred){
+                play();
+            } else {
+                changeActiveModal(SHARE);
+            }
+        }
+    }
 
     const onClickFriend = (friend) => {
         setFriend(friend);
@@ -33,38 +64,18 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
             avaUrl: friend.photo_200,
         }
         socket.emit("newPlayer", params);
-        changeActiveModal(MODAL_PAGE_WITH_FIXED_HEIGHT)
+        changeActiveModal(THEMES)
     }
 
     const confirmTheme = (_theme) => {
         if(_theme.forSponsor){
             if(player.status === 'sponsor'){
-                setGameTheme(_theme);
-                changeActiveModal(MODAL_CARD_NOTIFICATIONS);
+                newGame(_theme)
             } else {
                 onOpenSnackBar('Необходима подписка Premium', 'error')
             }
         } else {
-            setGameTheme(_theme);
-            changeActiveModal(MODAL_CARD_NOTIFICATIONS);
-        }
-    }
-
-    const newGame = async () => {
-        if(player.rsvp < 1){
-            onOpenSnackBar('Не хватает монет чтобы создать игру', 'error')
-        } else {
-            let _turn = null
-            if(gameTheme.quiz === true) _turn = player2._id;
-
-            const fields = {
-                playerId1: user.id, 
-                playerId2: player2.vkid, 
-                turn: _turn, 
-                theme: gameTheme.theme,
-            }
-            socket.emit('newGame', fields);
-            socket.emit("upGames", { userId: friend.vkid });
+            newGame(_theme);
         }
     }
 
@@ -89,12 +100,12 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
         let localModalHistory = modalHistory ? [...modalHistory] : [];
     
         if (activeModal === null) {
-          localModalHistory = [];
-          onCloseModals()
+            localModalHistory = [];
+            onCloseModals()
         } else if (modalHistory.indexOf(activeModal) !== -1) {
-          localModalHistory = localModalHistory.splice(0, localModalHistory.indexOf(activeModal) + 1);
+            localModalHistory = localModalHistory.splice(0, localModalHistory.indexOf(activeModal) + 1);
         } else {
-          localModalHistory.push(activeModal);
+            localModalHistory.push(activeModal);
         }
     
         setActiveModal(activeModal);
@@ -146,8 +157,15 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     },[socket])
 
     React.useEffect(()=>{
+        socket.on("newGameId", ({ data }) => {
+            setGameId(data.id)
+        });
+    },[socket])
+
+    React.useEffect(()=>{
         socket.on("friend", ({ data }) => {
-            setPlayer2(data.player)
+            setPlayer2(data.player);
+            setFriendIsRegistred(data.registred);
         });
     },[socket, user])
 
@@ -160,7 +178,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     return (
         <ModalRoot activeModal={activeModal} onClose={modalBack}>
             <ModalPage
-                id={MODAL_CARD_CHAT_INVITE}
+                id={FRIENDS}
                 onClose={() => changeActiveModal(null)}
                 settlingHeight={100}
                 height={'70%'}
@@ -176,45 +194,8 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                 />
                 {randomUserFriends}
             </ModalPage>
-            <ModalCard
-                id={MODAL_CARD_NOTIFICATIONS}
-                onClose={() => changeActiveModal(null)}
-                icon={ friend ? 
-                    <Avatar
-                        src={friend.photo_200}
-                        size={72}
-                    />:
-                    <Icon56UserCircleOutline />
-                }
-                header={<Title level="3">Создать новую игру<br/>с {friend?.first_name} {friend?.last_name}<br/>на тему {gameTheme?.theme}?</Title>}
-                actions={
-                    <React.Fragment>
-                        <Spacing size={16} />
-                        <ButtonGroup size="s" stretched mode="vertical">
-                            <Button
-                                key="allow"
-                                size="l"
-                                mode="primary"
-                                stretched
-                                onClick={newGame}
-                            >
-                                Создать
-                            </Button>
-                            <Button
-                                key="deny"
-                                size="l"
-                                mode="secondary"
-                                stretched
-                                onClick={test}
-                            >
-                                Отправить приложение
-                            </Button>
-                        </ButtonGroup>
-                    </React.Fragment>
-                }
-            />
             <ModalPage
-                id={MODAL_PAGE_WITH_FIXED_HEIGHT}
+                id={THEMES}
                 onClose={modalBack}
                 settlingHeight={100}
                 height={'70%'}
@@ -236,6 +217,44 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                     })}
                 </Group>
             </ModalPage>
+            <ModalCard
+                id={SHARE}
+                onClose={() => changeActiveModal(null)}
+                icon={ friend ? 
+                    <Avatar
+                        src={friend.photo_200}
+                        size={72}
+                    />:
+                    <Icon56UserCircleOutline />
+                }
+                header={<Title level="3">Это приложение пока неизвестно пользователю {friend?.first_name} {friend?.last_name}.<br/>
+                Поделитесь ссылкой, чтобы он узнал о нём и присоединиться к игре</Title>}
+                actions={
+                    <React.Fragment>
+                        <Spacing size={16} />
+                        <ButtonGroup size="s" stretched mode="vertical">
+                            <Button
+                                key="allow"
+                                size="l"
+                                mode="primary"
+                                stretched
+                                onClick={test}
+                            >
+                                Поделиться
+                            </Button>
+                            <Button
+                                key="deny"
+                                size="l"
+                                mode="secondary"
+                                stretched
+                                onClick={play}
+                            >
+                                Пропустить
+                            </Button>
+                        </ButtonGroup>
+                    </React.Fragment>
+                }
+            />
         </ModalRoot>
     );
 };
