@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from 'prop-types';
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
-import { Avatar, Button, ButtonGroup, Caption, Card, Div, FormItem, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
-import { Icon20Favorite } from '@vkontakte/icons';
+import { Avatar, Button, ButtonGroup, Caption, Card, Div, FormItem, IconButton, PanelSpinner, Placeholder, Select, SimpleCell, Text } from "@vkontakte/vkui";
+import { Icon20Favorite, Icon24DeleteOutlineAndroid } from '@vkontakte/icons';
 
-const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
+const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline, removeGame }) => {
     const routeNavigator = useRouteNavigator();
     const [ connecting, setConnecting ] = React.useState(false);
     const [ answereds, setAnswereds ] = React.useState();
@@ -90,6 +90,9 @@ const TheEnd = ({ user, friend, game, socket, makeCompliment, isOnline }) => {
                     <SimpleCell 
                         subhead={`Рейтинг игры: ${rating.rating}/5`} 
                         subtitle={`Оценок: ${rating.count}`}
+                        after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                     >
                     Вы играли в игру:<br/>{rating.theme}
                     </SimpleCell>
@@ -173,4 +176,5 @@ TheEnd.propTypes = {
     socket: PropTypes.object,
     makeCompliment: PropTypes.func,
     isOnline: PropTypes.func,
+    removeGame: PropTypes.func,
 };

@@ -1,4 +1,4 @@
-import { Alert, Div, FixedLayout, IconButton, Panel, PanelHeader, PanelHeaderBack, PanelSpinner, Separator, WriteBar, WriteBarIcon, } from "@vkontakte/vkui";
+import { Alert, Div, FixedLayout, Panel, PanelHeader, PanelHeaderBack, PanelSpinner, Separator, WriteBar, WriteBarIcon, } from "@vkontakte/vkui";
 import { useRouteNavigator } from "@vkontakte/vk-mini-apps-router";
 import PropTypes from "prop-types";
 import React from "react";
@@ -9,7 +9,6 @@ import TheEnd from "../componets/TheEnd.js";
 import Chat from "../componets/Chat.js";
 import ComlimentModal from "../componets/ComlimentModal.js";
 import UserInfoModal from "../componets/UserInfoModal.js";
-import { Icon24DeleteOutlineAndroid } from "@vkontakte/icons";
 
 export const Game = ({ id, fetchedUser, socket, setModal }) => {
     const fixedLayoutInnerElRef = React.useRef();
@@ -252,10 +251,7 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
     return (
         <Panel id={id}>
             <PanelHeader 
-            before={<PanelHeaderBack onClick={onClickBack} />} 
-            after={<IconButton aria-label="Удалить" onClick={removeGame}>
-                <Icon24DeleteOutlineAndroid color="red" />
-            </IconButton>}
+            before={<PanelHeaderBack onClick={onClickBack} />}
             >
             {game?.gameName}
             </PanelHeader>
@@ -277,8 +273,9 @@ export const Game = ({ id, fetchedUser, socket, setModal }) => {
                         questions={questions}
                         friendInfo={userInfo}
                         socket={socket}
+                        removeGame={removeGame}
                     />:
-                    <TheEnd user={user} friend={friend} game={game} socket={socket} makeCompliment={makeCompliment} isOnline={isOnline}/>}
+                    <TheEnd user={user} friend={friend} game={game} socket={socket} makeCompliment={makeCompliment} isOnline={isOnline} removeGame={removeGame}/>}
                 </>}
             </Div>}
             <Div>

@@ -210,8 +210,6 @@ export const Home = ({ id, fetchedUser, setModal, socket, onResetSnack, onChange
         clearTimeout(timeout)
         setPlayer(data.user)
         onResetSnack('close');
-        const fields = { vkid: fetchedUser.id };
-        socket.emit('getGames', fields);
       } 
     });
   },[socket, onResetSnack, player, fetchedUser, timeout])

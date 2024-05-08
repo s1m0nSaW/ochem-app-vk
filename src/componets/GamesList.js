@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar, List, PanelSpinner, Placeholder, SimpleCell, Text } from "@vkontakte/vkui";
-import { Icon16CrownCircleFillVkDating, Icon28Delete, Icon56BlockOutline } from '@vkontakte/icons';
+import { Icon16CrownCircleFillVkDating, Icon56BlockOutline } from '@vkontakte/icons';
 import PropTypes from 'prop-types';
 
 const GamesList = ({ games, setGame, userId, isOnline }) => {
@@ -18,9 +18,6 @@ const GamesList = ({ games, setGame, userId, isOnline }) => {
                             display: 'inline-block',
                             verticalAlign: 'text-top',
                         }}/>}</Text>}
-                        after={
-                            <Icon28Delete/>
-                        }
                         before={ userId === game.user1 ? 
                             <Avatar size={40} src={game.userUrl2}>
                                 {isOnline(game.user2vkid) && <Avatar.BadgeWithPreset preset="online" />}

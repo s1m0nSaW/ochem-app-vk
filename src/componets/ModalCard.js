@@ -19,7 +19,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     const [search, setSearch] = React.useState('');
     const [onlines, setOnlines] = React.useState(null);
     const [friendIsRegistred, setFriendIsRegistred] = React.useState(false);
-    const [gameId, setGameId] = React.useState(null);
     const routeNavigator = useRouteNavigator();
 
     const onChange = (e) => {
@@ -27,12 +26,8 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     };
 
     const play = () => {
-        if(gameId !== null){
-            const fields = { vkid: user.id, gameId: gameId };
-            socket.emit('setGame', fields);
-            routeNavigator.go('/game')
+        routeNavigator.go('/game')
             onCloseModals()
-        }
     }
 
     const newGame = async (gameTheme) => {
@@ -46,7 +41,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
             }
             socket.emit('newGame', fields);
             socket.emit("upGames", { userId: friend.vkid });
-            if(friendIsRegistred){
+            if(friendIsRegistred === true){
                 play();
             } else {
                 changeActiveModal(SHARE);
@@ -153,12 +148,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     React.useEffect(()=>{
         socket.on("ratings", ({ data }) => {
             setThemes(data.ratings)
-        });
-    },[socket])
-
-    React.useEffect(()=>{
-        socket.on("newGameId", ({ data }) => {
-            setGameId(data.id)
         });
     },[socket])
 

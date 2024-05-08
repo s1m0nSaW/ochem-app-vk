@@ -133,20 +133,20 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                 >
                     <HorizontalScroll arrowSize="m">
                         <TabsItem
-                            id="all"
-                            selected={selected === "all"}
-                            onClick={onClickAll}
-                            aria-controls="tab-all"
-                        >
-                            Все игры
-                        </TabsItem>
-                        <TabsItem
                             id="my"
                             selected={selected === "my"}
                             onClick={onClickMy}
                             aria-controls="tab-my"
                         >
                             Мои игры
+                        </TabsItem>
+                        <TabsItem
+                            id="all"
+                            selected={selected === "all"}
+                            onClick={onClickAll}
+                            aria-controls="tab-all"
+                        >
+                            Все игры
                         </TabsItem>
                     </HorizontalScroll>
                 </Tabs>
@@ -159,7 +159,7 @@ export const Games = ({ id, fetchedUser, setModal, socket, onResetSnack, onChang
                     <GamesList
                         games={games}
                         setGame={setGame}
-                        userId={player._id}
+                        userId={player?._id}
                         isOnline={isOnline}
                     />
                 )}

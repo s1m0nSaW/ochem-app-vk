@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Avatar, Button, ButtonGroup, Card, Div, Group, SimpleCell, Subhead, Text } from "@vkontakte/vkui";
+import { Avatar, Button, ButtonGroup, Card, Div, Group, IconButton, SimpleCell, Subhead, Text } from "@vkontakte/vkui";
+import { Icon24DeleteOutlineAndroid } from "@vkontakte/icons";
 
-const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo, socket }) => {
+const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, next, rateTheGame, questions, friendInfo, socket, removeGame }) => {
     const [ variant, setVariant ] = React.useState(0);
     const [ onlines, setOnlines ] = React.useState(null);
     const [ friendAnswer, setFriendAnswer ] = React.useState(false);
@@ -99,6 +100,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                     <SimpleCell
                         before={<Avatar size={40} src={user.avaUrl} />}
                         subtitle={`Ответ: ${answered?.answer1}`}
+                        after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                     >
                         {user.firstName}
                     </SimpleCell>
@@ -117,6 +121,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                             {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
                         </Avatar>}
                         subtitle={`Ответ: ${answered?.answer1}`}
+                        after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                     >
                         {friend.firstName}
                     </SimpleCell>
@@ -147,6 +154,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                         {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
                     </Avatar>}
                     subtitle="Вы отвечаете"
+                    after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                 >
                     {friend.firstName} отгадывает<br/>
                 </SimpleCell>:
@@ -154,6 +164,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                     before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
                         {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
                     </Avatar>}
+                    after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                 >
                     Отвечают оба игрока
                 </SimpleCell>}
@@ -165,6 +178,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                             {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
                         </Avatar>}
                     subtitle="Вы отгадываете"
+                    after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                 >
                     {friend.firstName} отвечает
                 </SimpleCell>:
@@ -240,4 +256,5 @@ ActiveStep.propTypes = {
     rateTheGame: PropTypes.func, 
     friendInfo: PropTypes.func,
     socket: PropTypes.object,
+    removeGame: PropTypes.func,
 };
