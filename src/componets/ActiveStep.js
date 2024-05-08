@@ -188,6 +188,9 @@ const ActiveStep = ({ question, answered, user, game, friend, updateAnswered, ne
                     before={<Avatar size={40} src={friend.avaUrl} onClick={()=>friendInfo()}>
                         {isOnline(friend.vkid) && <Avatar.BadgeWithPreset preset="online" />}
                     </Avatar>}
+                    after={<IconButton aria-label="Удалить" onClick={removeGame}>
+                            <Icon24DeleteOutlineAndroid color="red" />
+                        </IconButton>}
                 >
                     Отвечают оба игрока
                 </SimpleCell>}
