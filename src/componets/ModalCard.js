@@ -18,6 +18,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
     const [player2, setPlayer2] = React.useState(null);
     const [search, setSearch] = React.useState('');
     const [onlines, setOnlines] = React.useState(null);
+    const [gameId, setGameId] = React.useState(null)
     const [friendIsRegistred, setFriendIsRegistred] = React.useState(false);
     const routeNavigator = useRouteNavigator();
 
@@ -27,7 +28,7 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
 
     const play = () => {
         routeNavigator.go('/game')
-            onCloseModals()
+        onCloseModals()
     }
 
     const newGame = async (gameTheme) => {
@@ -76,19 +77,23 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
 
     const test = () => {
         bridge.send('VKWebAppShare', {
-          link: 'https://vk.com/app51864614'
-          })
-          .then((data) => { 
-            if (data.result) {
-              // Запись размещена
-              onOpenSnackBar('Приложение отправлено', 'success')
-            }
-          })
-          .catch((error) => {
-            // Ошибка
-            console.log(error);
-          });
-      }
+            link: 'https://vk.com/app51864614'
+            })
+            .then((data) => { 
+                if (data.result) {
+                // Запись размещена
+                onOpenSnackBar('Приложение отправлено', 'success')
+                const fields = { vkid: user.id, gameId: gameId };
+                socket.emit('setGame', fields);
+                routeNavigator.go('/game')
+                }
+            })
+            .catch((error) => {
+                // Ошибка
+                console.log(error);
+                onCloseModals()
+            });
+    }
 
     const changeActiveModal = (activeModal) => {
         activeModal = activeModal || null;
@@ -164,6 +169,12 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
         });
     },[socket])
 
+    React.useEffect(() => {
+        socket.on("updatedGame", ({ data }) => {
+            setGameId(data._id)
+        });
+    },[socket]);
+
     return (
         <ModalRoot activeModal={activeModal} onClose={modalBack}>
             <ModalPage
@@ -230,15 +241,6 @@ const ModalCards = ({ onCloseModals, user, onOpenSnackBar, player, socket, frien
                                 onClick={test}
                             >
                                 Поделиться
-                            </Button>
-                            <Button
-                                key="deny"
-                                size="l"
-                                mode="secondary"
-                                stretched
-                                onClick={play}
-                            >
-                                Пропустить
                             </Button>
                         </ButtonGroup>
                     </React.Fragment>
